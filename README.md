@@ -62,6 +62,23 @@ ai-engineering-company-project-monorepo/
 4. **Review** each top-level folder `README.md` to understand intended responsibilities (`uis/`, `services/`, `data/`, `skills/`, etc.).
 5. **Start implementing** milestone deliverables in `uis/` and `services/`, reusing `packages/shared/` and `data/` as needed.
 
+### Run the Brasaland website locally (Codespaces)
+
+From the repository root, run:
+
+```sh
+npx serve brasaland-website -l 8080
+```
+
+Or use the npm script:
+
+```sh
+npm run web:dev
+```
+
+Then open `http://localhost:8080` (or use Codespaces port forwarding).
+See `brasaland-website/LOCAL-DEV.md` for details.
+
 ---
 
 ## Milestones (reference)

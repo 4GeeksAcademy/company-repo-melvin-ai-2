@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brasa Points Registration | Brasaland</title>
+    <meta name="description" content="Join Brasa Points and start earning rewards at all Brasaland locations in Colombia and the United States." />
+    <link rel="canonical" href="https://brasaland.com/signup" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Restaurant",
+            "@id": "https://brasaland.com/#restaurant",
+            "name": "Brasaland",
+            "url": "https://brasaland.com/",
+            "servesCuisine": "Grilled meats",
+            "numberOfLocations": 14
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://brasaland.com/#website",
+            "url": "https://brasaland.com/",
+            "name": "Brasaland",
+            "publisher": {
+              "@id": "https://brasaland.com/#restaurant"
+            }
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://brasaland.com/signup#webpage",
+            "url": "https://brasaland.com/signup",
+            "name": "Brasa Points Registration | Brasaland",
+            "description": "Join Brasa Points and start earning rewards at all Brasaland locations in Colombia and the United States.",
+            "isPartOf": {
+              "@id": "https://brasaland.com/#website"
+            },
+            "about": {
+              "@id": "https://brasaland.com/#restaurant"
+            },
+            "inLanguage": "en",
+            "potentialAction": {
+              "@type": "RegisterAction",
+              "target": "https://brasaland.com/signup"
+            }
+          }
+        ]
+      }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              heading: ["'Trebuchet MS'", "'Arial Black'", "sans-serif"],
+              body: ["'Verdana'", "'Tahoma'", "sans-serif"],
+            },
+            colors: {
+              brand: {
+                50: "#fff7ed",
+                100: "#ffedd5",
+                500: "#f97316",
+                700: "#c2410c",
+                900: "#7c2d12",
+              },
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="font-sans bg-amber-50 text-stone-900">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:outline-none focus:ring-2 focus:ring-orange-700">Skip to content</a>
+    <header class="sticky top-0 z-40 border-b border-amber-200 bg-amber-50/95 backdrop-blur">
+      <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-4 md:px-6 lg:max-w-6xl">
+        <a href="index.html" class="font-sans text-2xl font-black tracking-wide text-orange-900">Brasaland</a>
+        <nav aria-label="Primary" class="w-full flex-1 sm:w-auto">
+          <ul class="flex flex-wrap items-center gap-2 text-xs font-semibold sm:justify-center sm:text-sm">
+            <li><a href="index.html" class="rounded-md border border-orange-700 px-3 py-1.5 text-orange-900 focus:outline-none focus:ring-2 focus:ring-orange-900" data-i18n="nav.home">Home</a></li>
+            <li><a href="locations.html" class="rounded-md border border-orange-700 px-3 py-1.5 text-orange-900 focus:outline-none focus:ring-2 focus:ring-orange-900" data-i18n="nav.locations">Locations</a></li>
+            <li><a href="signup.html" aria-current="page" class="rounded-md border border-orange-700 bg-orange-700 px-3 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-orange-900" data-i18n="nav.points">Brasa Points</a></li>
+          </ul>
+        </nav>
+        <div class="ml-auto flex items-center gap-2" role="group" aria-label="Language selector">
+          <button type="button" id="lang-en" aria-pressed="true" aria-label="Switch language to English" class="rounded-md border border-orange-700 bg-orange-700 px-3 py-1.5 text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-orange-900">EN</button>
+          <button type="button" id="lang-es" aria-pressed="false" aria-label="Cambiar idioma a espanol" class="rounded-md border border-orange-700 px-3 py-1.5 text-xs font-semibold text-orange-900 focus:outline-none focus:ring-2 focus:ring-orange-900">ES</button>
+        </div>
+      </div>
+    </header>
+    <main id="main-content" class="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-12 lg:max-w-6xl lg:py-14">
+      <section class="rounded-3xl bg-gradient-to-r from-orange-900 to-orange-700 p-8 text-white">
+        <h1 class="font-sans text-3xl font-black md:text-4xl" data-i18n="form.title">Join Brasa Points</h1>
+        <p class="mt-3 text-sm md:text-base" data-i18n="form.subtitle">Register once and start earning rewards in any Brasaland location in Colombia and the United States.</p>
+      </section>
+      <section class="mt-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-amber-200 md:p-8">
+        <p class="mb-5 rounded-md bg-orange-50 px-4 py-3 text-sm text-orange-900 ring-1 ring-orange-200" data-i18n="points.notice">Want to place an order? Call your favorite location or visit us directly. Online ordering coming soon!</p>
+        <form id="brasa-form" novalidate aria-describedby="form-status" class="space-y-5">
+          <div class="grid gap-5 md:grid-cols-2">
+            <div>
+              <label for="fullName" class="mb-1 block text-sm font-semibold" data-i18n="form.fullName">Full name *</label>
+              <input id="fullName" name="fullName" type="text" autocomplete="name" aria-describedby="error-fullName" class="w-full rounded-md border border-stone-300 px-3 py-2 focus:border-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300" required />
+              <p id="error-fullName" class="mt-1 min-h-5 text-sm font-medium text-red-800" aria-live="assertive"></p>
+            </div>
+            <div>
+              <label for="email" class="mb-1 block text-sm font-semibold" data-i18n="form.email">Email *</label>
+              <input id="email" name="email" type="email" autocomplete="email" aria-describedby="error-email" class="w-full rounded-md border border-stone-300 px-3 py-2 focus:border-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300" required />
+              <p id="error-email" class="mt-1 min-h-5 text-sm font-medium text-red-800" aria-live="assertive"></p>
+            </div>
+            <div>
+              <label for="phone" class="mb-1 block text-sm font-semibold" data-i18n="form.phone">Phone *</label>
+              <input id="phone" name="phone" type="tel" autocomplete="tel" aria-describedby="error-phone" class="w-full rounded-md border border-stone-300 px-3 py-2 focus:border-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300" required placeholder="+57 300 123 4567" />
+              <p id="error-phone" class="mt-1 min-h-5 text-sm font-medium text-red-800" aria-live="assertive"></p>
+            </div>
+            <div>
+              <label for="country" class="mb-1 block text-sm font-semibold" data-i18n="form.country">Country *</label>
+              <select id="country" name="country" aria-describedby="error-country" class="w-full rounded-md border border-stone-300 px-3 py-2 focus:border-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300" required>
+                <option value="" data-i18n="form.selectCountry">Select your country</option>
+                <option value="Colombia">Colombia</option>
+                <option value="United States">United States</option>
+              </select>
+              <p id="error-country" class="mt-1 min-h-5 text-sm font-medium text-red-800" aria-live="assertive"></p>
+            </div>
+            <div>
+              <label for="city" class="mb-1 block text-sm font-semibold" data-i18n="form.city">City *</label>
+              <select id="city" name="city" aria-describedby="error-city" class="w-full rounded-md border border-stone-300 px-3 py-2 focus:border-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300" required>
+                <option value="" data-i18n="form.selectCity">Select your city</option>
+              </select>
+              <p id="error-city" class="mt-1 min-h-5 text-sm font-medium text-red-800" aria-live="assertive"></p>
+            </div>
+            <div class="md:col-span-2">
+              <label for="favoriteLocation" class="mb-1 block text-sm font-semibold" data-i18n="form.favoriteLocation">Favorite Brasaland location</label>
+              <select id="favoriteLocation" name="favoriteLocation" class="w-full rounded-md border border-stone-300 px-3 py-2 focus:border-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                <option value="" data-i18n="form.selectFavoriteLocation">Select your favorite location (optional)</option>
+              </select>
+            </div>
+            <div class="md:col-span-2">
+              <fieldset class="rounded-lg border border-stone-200 p-4">
+                <legend class="px-1 text-sm font-semibold" data-i18n="form.dietary">Dietary preferences</legend>
+                <div class="mt-2 flex flex-wrap gap-4 text-sm">
+                  <label class="inline-flex items-center gap-2"><input type="checkbox" name="dietary" value="No restrictions" class="h-4 w-4 rounded border-stone-300 text-orange-700 focus:ring-orange-500" /><span data-i18n="form.dietaryNoRestrictions">No restrictions</span></label>
+                  <label class="inline-flex items-center gap-2"><input type="checkbox" name="dietary" value="Vegetarian" class="h-4 w-4 rounded border-stone-300 text-orange-700 focus:ring-orange-500" /><span data-i18n="form.dietaryVegetarian">Vegetarian</span></label>
+                  <label class="inline-flex items-center gap-2"><input type="checkbox" name="dietary" value="Gluten-free" class="h-4 w-4 rounded border-stone-300 text-orange-700 focus:ring-orange-500" /><span data-i18n="form.dietaryGlutenFree">Gluten-free</span></label>
+                  <label class="inline-flex items-center gap-2"><input type="checkbox" name="dietary" value="Other" class="h-4 w-4 rounded border-stone-300 text-orange-700 focus:ring-orange-500" /><span data-i18n="form.dietaryOther">Other</span></label>
+                </div>
+              </fieldset>
+            </div>
+            <div>
+              <label for="howFound" class="mb-1 block text-sm font-semibold" data-i18n="form.howFound">How did you find us? *</label>
+              <select id="howFound" name="howFound" aria-describedby="error-howFound" class="w-full rounded-md border border-stone-300 px-3 py-2 focus:border-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300" required>
+                <option value="" data-i18n="form.howFoundSelect">Select one option</option>
+                <option value="Social media" data-i18n="form.howFoundSocial">Social media</option>
+                <option value="Recommendation" data-i18n="form.howFoundRecommendation">Recommendation</option>
+                <option value="Walked by" data-i18n="form.howFoundWalkedBy">Walked by</option>
+                <option value="Internet search" data-i18n="form.howFoundSearch">Internet search</option>
+                <option value="Other" data-i18n="form.dietaryOther">Other</option>
+              </select>
+              <p id="error-howFound" class="mt-1 min-h-5 text-sm font-medium text-red-800" aria-live="assertive"></p>
+            </div>
+            <div>
+              <label for="dob" class="mb-1 block text-sm font-semibold" data-i18n="form.dob">Date of birth *</label>
+              <input id="dob" name="dob" type="date" aria-describedby="error-dob" class="w-full rounded-md border border-stone-300 px-3 py-2 focus:border-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300" required />
+              <p id="error-dob" class="mt-1 min-h-5 text-sm font-medium text-red-800" aria-live="assertive"></p>
+            </div>
+          </div>
+          <div class="space-y-2">
+            <label class="inline-flex items-start gap-2 text-sm">
+              <input id="acceptTerms" name="acceptTerms" type="checkbox" aria-describedby="error-acceptTerms" class="mt-1 h-4 w-4 rounded border-stone-300 text-orange-700 focus:ring-orange-500" required />
+              <span data-i18n="form.acceptTerms">I accept Brasa Points program terms *</span>
+            </label>
+            <p id="error-acceptTerms" class="min-h-5 text-sm font-medium text-red-800" aria-live="assertive"></p>
+            <label class="inline-flex items-start gap-2 text-sm">
+              <input id="receiveOffers" name="receiveOffers" type="checkbox" class="mt-1 h-4 w-4 rounded border-stone-300 text-orange-700 focus:ring-orange-500" />
+              <span data-i18n="form.receiveOffers">I want to receive offers via email</span>
+            </label>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <button type="submit" class="rounded-md bg-orange-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-orange-900 focus:outline-none focus:ring-2 focus:ring-orange-900" data-i18n="form.submit">Register</button>
+            <button type="button" id="clear-form" class="rounded-md border border-stone-400 bg-white px-5 py-3 text-sm font-bold text-stone-700 transition hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-700" data-i18n="form.clear">Clear form</button>
+          </div>
+        </form>
+        <div id="form-status" class="mt-6 rounded-xl border p-4 hidden" role="status" aria-live="polite"></div>
+      </section>
+    </main>
+    <script src="site.js"></script>
+  </body>
+</html>

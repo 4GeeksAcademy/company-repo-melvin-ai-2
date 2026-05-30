@@ -1,0 +1,10 @@
+{
+  "name": "milestone-0",
+  "private": true,
+  "version": "0.0.1",
+  "description": "AI Engineering Company Project monorepo",
+  "scripts": {
+    "web:dev": "npx serve brasaland-website -l 8080",
+    "web:dev:python": "python3 -m http.server 8080 --directory brasaland-website"
+  }
+}
