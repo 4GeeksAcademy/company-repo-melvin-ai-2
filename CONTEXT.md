@@ -1,16 +1,18 @@
-# Your company context
+# Brasaland Context
 
-**Replace this file** with the CONTEXT for your assigned company:
+## Company
+Brasaland is a family-founded grilled food restaurant chain established in Medellín in 2008. It operates 14 company-owned restaurants: 10 in Medellín, Bogotá, and Cali, and 4 in Miami and Orlando. About 115 employees support restaurant operations and corporate teams in Medellín and Miami.
 
-- **Brasaland** — `CONTEXT-brasaland-briefing.md` (grilled food restaurant chain, Colombia + Florida)
-- **TrackFlow** — `CONTEXT-trackflow-briefing.md` (last-mile delivery and warehouse, Mexico + Spain)
-- **Nexova** — `CONTEXT-nexova-briefing.md` (HR consulting and talent acquisition, Chile + Argentina)
-- **HealthCore** — `CONTEXT-healthcore-briefing.md` (outpatient healthcare clinic network, US + UK)
+## Business
+Brasaland promises consistent product quality, warm service, and speed. It operates in a bilingual Colombia–Florida environment, uses COP and USD, and is improving fragmented processes such as WhatsApp orders, inventory visibility, loyalty data, restaurant reporting, and hiring.
 
-Your instructor or milestone materials will point you to the correct CONTEXT file. Copy its contents here so that all project work and AI assistance use the same domain data, field names, and constraints.
+## What We Are Building
+- An improved public website and Brasa Points registration experience in `uis/website`.
+- An internal operations entry point in `uis/backoffice`.
+- Reusable TypeScript business logic for sales, margins, waste, and location performance.
+- Persistent memory, rules, and skills that keep future agent work aligned with Brasaland.
 
----
-
-_Until you add your context, keep this placeholder so the repo structure is clear._
-
-_Estas instrucciones también están disponibles en [español](./CONTEXT.es.md)._
+## Constraints
+- Treat this file and `memory-bank/` as the business source of truth.
+- Keep business terms, data, prompts, and interfaces consistent.
+- Keep reusable business logic outside UI components; place any APIs under `services/`.
