@@ -49,13 +49,14 @@ You are building **one company** across many milestones and projects. Each top-l
 
 ---
 
-## Current status of the template
+## Current project status
 
-> 💡 This repository currently provides a **base folder structure and documentation skeleton** only. It does not include runnable apps or global scripts yet.
->
-> - `CONTEXT.md` is a placeholder and must be replaced with your assigned company context.
-> - There is no root `AGENTS.md` yet.
-> - Shared package metadata exists in `packages/shared/package.json` (`@repo/shared-types`), but no workspace runner is configured at root.
+This repository is configured for Brasaland and now includes persistent agent context, governance rules, a reusable delivery skill, two runnable Next.js applications, and the canonical Milestone 2 TypeScript operations module.
+
+- `uis/website` contains the public corporate and Brasa Points experience.
+- `uis/backoffice` contains the internal operations dashboard.
+- `src` contains imported domain models, sample data, and pure business calculations.
+- `memory-bank`, `AGENTS.md`, `.agents/rules`, and `.agents/skills` define how future agents work safely.
 
 ---
 
