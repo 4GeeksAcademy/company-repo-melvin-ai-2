@@ -2,6 +2,8 @@
 
 FastAPI service that runs the same Brasaland incident validation and metrics as Phase 1 (`scripts/analyze.py`), using shared logic in `app/incidents/analysis.py`.
 
+Grading acceptance for this assignment uses the **100-row** sample at `data/incidents-brasaland.csv` (see [`memory-bank/company-file-analyzer.md`](../../memory-bank/company-file-analyzer.md)).
+
 ## Setup
 
 ```bash
@@ -32,4 +34,4 @@ Errors (empty file, wrong extension, bad encoding, missing columns) return `400`
 
 ## Context
 
-Field names, categories (`CUSTOMER_COMPLAINT`, `EQUIPMENT`, `SUPPLY`, `FOOD_QUALITY`, `STAFF`), statuses (`OPEN`, `CLOSED`, `DISCARDED`), and expected sample metrics come from `.agents/rules/incident-report-processor/context.md`.
+Field names, categories (`CUSTOMER_COMPLAINT`, `EQUIPMENT`, `SUPPLY`, `FOOD_QUALITY`, `STAFF`), statuses (`OPEN`, `CLOSED`, `DISCARDED`), invalidation rules, and expected metrics for the **100-row** sample are documented in [`memory-bank/company-file-analyzer.md`](../../memory-bank/company-file-analyzer.md).

@@ -8,12 +8,14 @@ This folder contains **helper scripts** for the monorepo: development automation
 ## Incident Report Processor (Phase 1)
 
 - **Script:** [`analyze.py`](./analyze.py)
-- **Context:** [`.agents/rules/incident-report-processor/context.md`](../.agents/rules/incident-report-processor/context.md)
-- **Sample CSV:** [`data/incidents-brasaland.csv`](../data/incidents-brasaland.csv) (PII-bearing — analyze only inside this monorepo; do not send to external AI tools)
+- **Assignment context:** [`memory-bank/company-file-analyzer.md`](../memory-bank/company-file-analyzer.md) (schema, invalidation rules, expected metrics)
+- **Sample CSV:** [`data/incidents-brasaland.csv`](../data/incidents-brasaland.csv) — **100 data rows** (PII-bearing; analyze only inside this monorepo; do not send to external AI tools)
 
 ```bash
 python3 scripts/analyze.py data/incidents-brasaland.csv
 ```
+
+Expected against the 100-row sample: 100 total · 96 valid · 4 invalid · satisfaction average **3.46**.
 
 Optional console prompt exports `results.csv` in the current working directory (`metric`, `value`, `percentage`).
 
