@@ -5,4 +5,10 @@ This folder holds **cross-cutting documentation** for the monorepo: architecture
 - **Main purpose**: provide a single place for “global” project documentation (not tied to one app or agent only).
 - **Recommendation**: organize docs by topic (architecture, deployment, data, security, observability, etc.) and keep links from each component’s README to these guides.
 
+## Documents in this folder
+
+- [`ARCHITECTURE_PROPOSAL.md`](./ARCHITECTURE_PROPOSAL.md) — full CTO-facing FastAPI backend architecture proposal (grading detail).
+- [`ARCHITECTURE_PROPOSAL_READABLE.md`](./ARCHITECTURE_PROPOSAL_READABLE.md) — shorter plain-language summary of the same proposal.
+- [`ARCHITECTURE_PROPOSAL.pdf`](./ARCHITECTURE_PROPOSAL.pdf) — printable PDF of the readable summary (4 pages).
+
 > _Spanish version: [README.es.md](./README.es.md)._
