@@ -38,3 +38,4 @@ Company File Analyzer / Incident Report Processor — Phase 1 CLI and Phase 2 AP
 - FastAPI: `POST /api/incidents/analyze`, `GET /api/incidents/results/export` under `services/api`.
 - Next.js app `uis/web` with Incident analysis page (upload, summary, invalid breakdown, CSV download).
 - Verification: API TestClient against `data/incidents-brasaland.csv` returned CONTEXT metrics (100/96/4, avg 3.46); `uis/web` production build passed.
+- Reporting gap closed: CLI, UI, and CSV export now surface all six invalid-rule counts (including `missing_reporter_id` and `score_out_of_range`, both 0 on the sample).

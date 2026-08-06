@@ -53,7 +53,16 @@ A row is **invalid** if any rule below applies. Invalid rows are **detected, cou
 | Valid | **96** |
 | Invalid | **4** |
 
-**Invalid breakdown:** missing `location_id` 1 · invalid/missing category 1 · empty/too-short description 1 · `CLOSED` with no score 1
+**Invalid breakdown (all rule types):**
+
+| Rule | Count |
+|------|-------|
+| Missing `location_id` | 1 |
+| Missing / invalid `category` | 1 |
+| Empty / too-short `description` | 1 |
+| Missing `reporter_id` | 0 |
+| `CLOSED` with no `satisfaction_score` | 1 |
+| `satisfaction_score` out of range | 0 |
 
 **Category (valid):** `CUSTOMER_COMPLAINT` 29 · `EQUIPMENT` 17 · `SUPPLY` 22 · `FOOD_QUALITY` 19 · `STAFF` 9
 

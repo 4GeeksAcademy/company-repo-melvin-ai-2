@@ -207,8 +207,18 @@ def build_export_rows(result: AnalysisResult) -> list[dict[str, Any]]:
             "percentage": "",
         },
         {
+            "metric": "invalid_missing_reporter_id",
+            "value": result.rule_counts[RULE_MISSING_REPORTER],
+            "percentage": "",
+        },
+        {
             "metric": "invalid_closed_no_score",
             "value": result.rule_counts[RULE_CLOSED_NO_SCORE],
+            "percentage": "",
+        },
+        {
+            "metric": "invalid_score_out_of_range",
+            "value": result.rule_counts[RULE_SCORE_OUT_OF_RANGE],
             "percentage": "",
         },
     ]

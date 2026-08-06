@@ -15,6 +15,8 @@ from app.incidents.analysis import (  # noqa: E402
     RULE_EMPTY_DESCRIPTION,
     RULE_INVALID_CATEGORY,
     RULE_MISSING_LOCATION,
+    RULE_MISSING_REPORTER,
+    RULE_SCORE_OUT_OF_RANGE,
     AnalysisResult,
     analyze_path,
     export_results_csv_text,
@@ -49,8 +51,16 @@ def print_report(result: AnalysisResult) -> None:
         f"{result.rule_counts[RULE_EMPTY_DESCRIPTION]}"
     )
     print(
-        f"  └─ Closed case, no score ......... "
+        f"  ├─ Missing reporter_id ........... "
+        f"{result.rule_counts[RULE_MISSING_REPORTER]}"
+    )
+    print(
+        f"  ├─ Closed case, no score ......... "
         f"{result.rule_counts[RULE_CLOSED_NO_SCORE]}"
+    )
+    print(
+        f"  └─ Score out of range ............ "
+        f"{result.rule_counts[RULE_SCORE_OUT_OF_RANGE]}"
     )
     print()
     print("BREAKDOWN BY CATEGORY (valid records)")

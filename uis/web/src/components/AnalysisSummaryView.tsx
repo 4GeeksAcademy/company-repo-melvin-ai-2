@@ -58,8 +58,16 @@ export function AnalysisSummaryView({ summary }: AnalysisSummaryViewProps) {
             <strong>{invalid_breakdown.empty_description}</strong>
           </li>
           <li>
+            <span>Missing reporter_id</span>
+            <strong>{invalid_breakdown.missing_reporter_id}</strong>
+          </li>
+          <li>
             <span>Closed case, no score</span>
             <strong>{invalid_breakdown.closed_case_no_score}</strong>
+          </li>
+          <li>
+            <span>Satisfaction score out of range</span>
+            <strong>{invalid_breakdown.score_out_of_range}</strong>
           </li>
         </ul>
       </section>
