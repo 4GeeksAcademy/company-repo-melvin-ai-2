@@ -19,5 +19,7 @@ python3 scripts/analyze.py data/incidents-brasaland.csv
 
 See [`scripts/README.md`](scripts/README.md).
 
-## Phase 2 (next)
-Backend API + web UI for upload, on-screen summary, and CSV download — reusing the same validation/metric logic.
+## Phase 2 (platform)
+- API: `services/api` — `POST /api/incidents/analyze`, `GET /api/incidents/results/export`
+- UI: `uis/web` — Incident analysis page (nav, upload, summary, download)
+- Shared logic: `services/api/app/incidents/analysis.py` (also used by `scripts/analyze.py`)

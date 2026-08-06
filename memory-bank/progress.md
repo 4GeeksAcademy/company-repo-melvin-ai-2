@@ -1,7 +1,7 @@
 # Progress
 
 ## Current Milestone
-Company File Analyzer / Incident Report Processor — Phase 1 validation script, then API + UI integration.
+Company File Analyzer / Incident Report Processor — Phase 1 CLI and Phase 2 API + `uis/web` delivered.
 
 ## Completed
 - Added the business and technical memory bank, root agent workflow, scoped rules, and delivery-verification skill.
@@ -20,8 +20,8 @@ Company File Analyzer / Incident Report Processor — Phase 1 validation script,
 - Repository diff check and editor diagnostics passed.
 
 ## Next Steps
-- Phase 2: expose the same incident analysis via a backend API and web UI (upload, on-screen summary, CSV download).
-- Future milestones may still add a centralized API under `services`, persistence for Brasa Points, authentication for the backoffice, inventory forecasting, and People & Talent workflows.
+- Optional polish: auth for internal tools, persistence beyond in-memory last analysis.
+- Future milestones may still add Brasa Points persistence, backoffice authentication, inventory forecasting, and People & Talent workflows.
 
 ## Documentation
 - Updated `docs/ARCHITECTURE_PROPOSAL.md` into a CTO-facing FastAPI backend proposal: layered domain architecture, `services/api` module layout, operations-first routers, FE/BE separation (monorepo, env, CORS), Milestone 2 TS→Python porting strategy, and risks — with no database choice and auth deferred for v1.
@@ -31,3 +31,9 @@ Company File Analyzer / Incident Report Processor — Phase 1 validation script,
 - Moved sample data to `data/incidents-brasaland.csv`.
 - Added `scripts/analyze.py` using rules from `.agents/rules/incident-report-processor/context.md`.
 - Verified against expected values: 100 total, 96 valid, 4 invalid; category/status breakdowns and average satisfaction **3.46** match CONTEXT.
+
+## Incident Report Processor (Phase 2)
+- Shared analysis module: `services/api/app/incidents/analysis.py` (used by CLI + API).
+- FastAPI: `POST /api/incidents/analyze`, `GET /api/incidents/results/export` under `services/api`.
+- Next.js app `uis/web` with Incident analysis page (upload, summary, invalid breakdown, CSV download).
+- Verification: API TestClient against `data/incidents-brasaland.csv` returned CONTEXT metrics (100/96/4, avg 3.46); `uis/web` production build passed.

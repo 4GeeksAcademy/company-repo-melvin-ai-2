@@ -1,135 +1,25 @@
 #!/usr/bin/env python3
-"""Brasaland Incident Report Processor — Phase 1 analysis script."""
+"""Brasaland Incident Report Processor — Phase 1 CLI (uses shared API analysis)."""
 
 from __future__ import annotations
 
-import csv
 import sys
-from collections import Counter
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
+API_ROOT = Path(__file__).resolve().parents[1] / "services" / "api"
+if str(API_ROOT) not in sys.path:
+    sys.path.insert(0, str(API_ROOT))
 
-VALID_LOCATIONS = {f"COL-{i:02d}" for i in range(1, 11)} | {
-    f"FLA-{i:02d}" for i in range(1, 5)
-}
-VALID_CATEGORIES = (
-    "CUSTOMER_COMPLAINT",
-    "EQUIPMENT",
-    "SUPPLY",
-    "FOOD_QUALITY",
-    "STAFF",
+from app.incidents.analysis import (  # noqa: E402
+    RULE_CLOSED_NO_SCORE,
+    RULE_EMPTY_DESCRIPTION,
+    RULE_INVALID_CATEGORY,
+    RULE_MISSING_LOCATION,
+    AnalysisResult,
+    analyze_path,
+    export_results_csv_text,
+    _pct_label,
 )
-VALID_STATUSES = ("OPEN", "CLOSED", "DISCARDED")
-
-RULE_MISSING_LOCATION = "missing_location_id"
-RULE_INVALID_CATEGORY = "invalid_or_missing_category"
-RULE_EMPTY_DESCRIPTION = "empty_description"
-RULE_MISSING_REPORTER = "missing_reporter_id"
-RULE_CLOSED_NO_SCORE = "closed_no_score"
-RULE_SCORE_OUT_OF_RANGE = "score_out_of_range"
-
-
-@dataclass
-class AnalysisResult:
-    source_name: str
-    total_rows: int = 0
-    valid_rows: list[dict[str, str]] = field(default_factory=list)
-    invalid_count: int = 0
-    rule_counts: Counter[str] = field(default_factory=Counter)
-    category_counts: Counter[str] = field(default_factory=Counter)
-    status_counts: Counter[str] = field(default_factory=Counter)
-    score_counts: Counter[int] = field(default_factory=Counter)
-    closed_with_score: int = 0
-    closed_total: int = 0
-    average_score: float | None = None
-
-
-def _cell(row: dict[str, str], key: str) -> str:
-    return (row.get(key) or "").strip()
-
-
-def _parse_score(raw: str) -> int | None | str:
-    """Return int score, None if blank, or 'invalid' if not parseable."""
-    value = raw.strip()
-    if value == "":
-        return None
-    try:
-        return int(value)
-    except ValueError:
-        return "invalid"
-
-
-def classify_row(row: dict[str, str]) -> list[str]:
-    """Return rule ids that make this row invalid (may be empty)."""
-    reasons: list[str] = []
-
-    location_id = _cell(row, "location_id")
-    if not location_id or location_id not in VALID_LOCATIONS:
-        reasons.append(RULE_MISSING_LOCATION)
-
-    category = _cell(row, "category")
-    if not category or category not in VALID_CATEGORIES:
-        reasons.append(RULE_INVALID_CATEGORY)
-
-    description = _cell(row, "description")
-    if len(description) < 5:
-        reasons.append(RULE_EMPTY_DESCRIPTION)
-
-    reporter_id = _cell(row, "reporter_id")
-    if not reporter_id:
-        reasons.append(RULE_MISSING_REPORTER)
-
-    status = _cell(row, "status")
-    score = _parse_score(_cell(row, "satisfaction_score"))
-
-    if status == "CLOSED" and score is None:
-        reasons.append(RULE_CLOSED_NO_SCORE)
-
-    if score == "invalid" or (isinstance(score, int) and not 1 <= score <= 5):
-        reasons.append(RULE_SCORE_OUT_OF_RANGE)
-
-    return reasons
-
-
-def analyze(csv_path: Path) -> AnalysisResult:
-    result = AnalysisResult(source_name=csv_path.name)
-
-    with csv_path.open(encoding="utf-8", newline="") as handle:
-        reader = csv.DictReader(handle)
-        for row in reader:
-            result.total_rows += 1
-            reasons = classify_row(row)
-            if reasons:
-                result.invalid_count += 1
-                for reason in reasons:
-                    result.rule_counts[reason] += 1
-                continue
-
-            result.valid_rows.append(row)
-            result.category_counts[_cell(row, "category")] += 1
-            status = _cell(row, "status")
-            result.status_counts[status] += 1
-
-            if status == "CLOSED":
-                result.closed_total += 1
-                score = _parse_score(_cell(row, "satisfaction_score"))
-                if isinstance(score, int):
-                    result.closed_with_score += 1
-                    result.score_counts[score] += 1
-
-    if result.closed_with_score:
-        total = sum(score * count for score, count in result.score_counts.items())
-        result.average_score = round(total / result.closed_with_score, 2)
-
-    return result
-
-
-def _pct(part: int, whole: int) -> str:
-    if whole == 0:
-        return "0.0%"
-    return f"{(part / whole) * 100:.1f}%"
 
 
 def print_report(result: AnalysisResult) -> None:
@@ -174,7 +64,9 @@ def print_report(result: AnalysisResult) -> None:
     for index, (code, label) in enumerate(categories):
         count = result.category_counts[code]
         branch = "└─" if index == len(categories) - 1 else "├─"
-        print(f"  {branch} {label} {count}  ({_pct(count, valid_count)})")
+        print(
+            f"  {branch} {label} {count}  ({_pct_label(count, valid_count)})"
+        )
     print()
     print("BREAKDOWN BY STATUS (valid records)")
     statuses = [
@@ -185,7 +77,9 @@ def print_report(result: AnalysisResult) -> None:
     for index, (code, label) in enumerate(statuses):
         count = result.status_counts[code]
         branch = "└─" if index == len(statuses) - 1 else "├─"
-        print(f"  {branch} {label} {count}  ({_pct(count, valid_count)})")
+        print(
+            f"  {branch} {label} {count}  ({_pct_label(count, valid_count)})"
+        )
     print()
     print("SATISFACTION INDEX (closed cases)")
     print(f"  Scored cases: {result.closed_with_score} of {result.closed_total}")
@@ -205,87 +99,6 @@ def print_report(result: AnalysisResult) -> None:
     print("=" * 60)
 
 
-def build_export_rows(result: AnalysisResult) -> list[dict[str, Any]]:
-    valid_count = len(result.valid_rows)
-    rows: list[dict[str, Any]] = [
-        {"metric": "total_records", "value": result.total_rows, "percentage": ""},
-        {"metric": "valid_records", "value": valid_count, "percentage": ""},
-        {"metric": "invalid_records", "value": result.invalid_count, "percentage": ""},
-        {
-            "metric": "invalid_missing_location_id",
-            "value": result.rule_counts[RULE_MISSING_LOCATION],
-            "percentage": "",
-        },
-        {
-            "metric": "invalid_or_missing_category",
-            "value": result.rule_counts[RULE_INVALID_CATEGORY],
-            "percentage": "",
-        },
-        {
-            "metric": "invalid_empty_description",
-            "value": result.rule_counts[RULE_EMPTY_DESCRIPTION],
-            "percentage": "",
-        },
-        {
-            "metric": "invalid_closed_no_score",
-            "value": result.rule_counts[RULE_CLOSED_NO_SCORE],
-            "percentage": "",
-        },
-    ]
-
-    for code in VALID_CATEGORIES:
-        count = result.category_counts[code]
-        rows.append(
-            {
-                "metric": f"category_{code}",
-                "value": count,
-                "percentage": _pct(count, valid_count).rstrip("%"),
-            }
-        )
-
-    for code in VALID_STATUSES:
-        count = result.status_counts[code]
-        rows.append(
-            {
-                "metric": f"status_{code}",
-                "value": count,
-                "percentage": _pct(count, valid_count).rstrip("%"),
-            }
-        )
-
-    rows.append(
-        {
-            "metric": "satisfaction_scored_cases",
-            "value": result.closed_with_score,
-            "percentage": "",
-        }
-    )
-    rows.append(
-        {
-            "metric": "satisfaction_average",
-            "value": result.average_score if result.average_score is not None else "",
-            "percentage": "",
-        }
-    )
-    for score in range(1, 6):
-        rows.append(
-            {
-                "metric": f"satisfaction_score_{score}",
-                "value": result.score_counts[score],
-                "percentage": "",
-            }
-        )
-    return rows
-
-
-def export_results_csv(result: AnalysisResult, output_path: Path) -> None:
-    rows = build_export_rows(result)
-    with output_path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["metric", "value", "percentage"])
-        writer.writeheader()
-        writer.writerows(rows)
-
-
 def main(argv: list[str] | None = None) -> int:
     args = argv if argv is not None else sys.argv[1:]
     if len(args) != 1:
@@ -297,7 +110,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Error: file not found: {csv_path}", file=sys.stderr)
         return 1
 
-    result = analyze(csv_path)
+    result = analyze_path(csv_path)
     print_report(result)
 
     try:
@@ -307,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if answer == "y":
         output_path = Path("results.csv")
-        export_results_csv(result, output_path)
+        output_path.write_text(export_results_csv_text(result), encoding="utf-8")
         print(f"Saved {output_path.resolve()}")
 
     return 0

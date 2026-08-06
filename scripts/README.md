@@ -17,4 +17,6 @@ python3 scripts/analyze.py data/incidents-brasaland.csv
 
 Optional console prompt exports `results.csv` in the current working directory (`metric`, `value`, `percentage`).
 
+The script imports shared analysis from `services/api/app/incidents/analysis.py` (same logic as `POST /api/incidents/analyze`).
+
 > _Spanish version: [README.es.md](./README.es.md)._
