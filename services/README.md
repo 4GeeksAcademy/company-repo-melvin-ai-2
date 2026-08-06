@@ -11,6 +11,6 @@ Each subfolder inside `services/` must correspond to **one specific service** (f
 
 | Service | Path | Purpose |
 |---------|------|---------|
-| Incident API | [`api/`](./api/README.md) | FastAPI upload/analyze/export for Brasaland incident CSVs (**100-row** sample; see [`memory-bank/company-file-analyzer.md`](../memory-bank/company-file-analyzer.md)) |
+| Incident API | [`api/`](./api/README.md) | FastAPI upload/analyze/export for Brasaland incident CSVs (**100-row** sample at `scripts/incidents-brasaland.csv`; see [`memory-bank/company-file-analyzer.md`](../memory-bank/company-file-analyzer.md)) |
 
 > _Spanish version: [README.es.md](./README.es.md)._

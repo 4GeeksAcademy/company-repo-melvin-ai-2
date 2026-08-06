@@ -6,7 +6,7 @@ Companion detail for agents also lives at [`.agents/rules/incident-report-proces
 
 ## Sample input (what we validate against)
 
-- **File:** [`data/incidents-brasaland.csv`](../data/incidents-brasaland.csv)
+- **File:** [`scripts/incidents-brasaland.csv`](../scripts/incidents-brasaland.csv) (assignment layout; same content also kept under `data/` if needed)
 - **Rows:** **100** data rows (plus header) — this is the official test sample for grading
 - Production volume may grow much larger later; Phase 1/2 acceptance uses this **100-row** file only
 
@@ -72,10 +72,24 @@ A row is **invalid** if any rule below applies. Invalid rows are **detected, cou
 
 ## How to run
 
+### Monorepo layout (submission)
+
+```text
+scripts/
+  analyze.py
+  incidents-brasaland.csv
+
+services/
+  api/
+
+uis/
+  web/
+```
+
 ### Phase 1 — script
 
 ```bash
-python3 scripts/analyze.py data/incidents-brasaland.csv
+python3 scripts/analyze.py scripts/incidents-brasaland.csv
 ```
 
 See [`scripts/README.md`](../scripts/README.md).

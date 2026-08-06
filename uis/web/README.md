@@ -2,7 +2,7 @@
 
 Internal Next.js app for Brasaland operations tools. Phase 2 adds the **Incident analysis** page that uploads a CSV to `services/api` and shows metrics aligned with [`memory-bank/company-file-analyzer.md`](../../memory-bank/company-file-analyzer.md).
 
-Use the official **100-row** sample: `data/incidents-brasaland.csv`.
+Use the official **100-row** sample: `scripts/incidents-brasaland.csv`.
 
 ## Run
 

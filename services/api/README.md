@@ -2,7 +2,7 @@
 
 FastAPI service that runs the same Brasaland incident validation and metrics as Phase 1 (`scripts/analyze.py`), using shared logic in `app/incidents/analysis.py`.
 
-Grading acceptance for this assignment uses the **100-row** sample at `data/incidents-brasaland.csv` (see [`memory-bank/company-file-analyzer.md`](../../memory-bank/company-file-analyzer.md)).
+Grading acceptance for this assignment uses the **100-row** sample at `scripts/incidents-brasaland.csv` (see [`memory-bank/company-file-analyzer.md`](../../memory-bank/company-file-analyzer.md)).
 
 ## Setup
 
