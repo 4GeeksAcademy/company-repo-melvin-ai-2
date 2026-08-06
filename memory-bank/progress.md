@@ -1,7 +1,7 @@
 # Progress
 
 ## Current Milestone
-Establish the Brasaland agent infrastructure and deliver the first runnable public and internal Next.js applications.
+Company File Analyzer / Incident Report Processor — Phase 1 validation script, then API + UI integration.
 
 ## Completed
 - Added the business and technical memory bank, root agent workflow, scoped rules, and delivery-verification skill.
@@ -20,8 +20,14 @@ Establish the Brasaland agent infrastructure and deliver the first runnable publ
 - Repository diff check and editor diagnostics passed.
 
 ## Next Steps
-Future milestones may add a centralized API under `services`, persistence for Brasa Points, authentication for the backoffice, inventory forecasting, and People & Talent workflows.
+- Phase 2: expose the same incident analysis via a backend API and web UI (upload, on-screen summary, CSV download).
+- Future milestones may still add a centralized API under `services`, persistence for Brasa Points, authentication for the backoffice, inventory forecasting, and People & Talent workflows.
 
 ## Documentation
 - Updated `docs/ARCHITECTURE_PROPOSAL.md` into a CTO-facing FastAPI backend proposal: layered domain architecture, `services/api` module layout, operations-first routers, FE/BE separation (monorepo, env, CORS), Milestone 2 TS→Python porting strategy, and risks — with no database choice and auth deferred for v1.
 - Added `docs/ARCHITECTURE_PROPOSAL_READABLE.md` (plain-language summary) and `docs/ARCHITECTURE_PROPOSAL.pdf` (printable export of that summary).
+
+## Incident Report Processor (Phase 1)
+- Moved sample data to `data/incidents-brasaland.csv`.
+- Added `scripts/analyze.py` using rules from `.agents/rules/incident-report-processor/context.md`.
+- Verified against expected values: 100 total, 96 valid, 4 invalid; category/status breakdowns and average satisfaction **3.46** match CONTEXT.
