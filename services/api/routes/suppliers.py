@@ -1,4 +1,4 @@
-"""Supplier directory FastAPI router."""
+"""Supplier directory FastAPI routes."""
 
 from __future__ import annotations
 
@@ -6,15 +6,15 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.suppliers import db as suppliers_db
-from app.suppliers.models import (
+import database
+from models import (
     RateUpdate,
     StatusUpdate,
     SupplierCreate,
     SupplierResponse,
     utc_now,
 )
-from app.suppliers.seeder import run_seed
+from seed import run_seed
 
 router = APIRouter(prefix="/suppliers", tags=["suppliers"])
 
@@ -28,7 +28,7 @@ def _as_response(row: dict) -> SupplierResponse:
 def create_supplier(payload: SupplierCreate) -> SupplierResponse:
     data = payload.model_dump(mode="json")
     data["updated_at"] = None
-    created = suppliers_db.insert_supplier(data)
+    created = database.insert_supplier(data)
     return _as_response(created)
 
 
@@ -38,7 +38,7 @@ def list_suppliers(
     country: Optional[str] = Query(default=None),
     category: Optional[str] = Query(default=None),
 ) -> List[SupplierResponse]:
-    rows = suppliers_db.list_suppliers(country=country, category=category)
+    rows = database.list_suppliers(country=country, category=category)
     return [_as_response(row) for row in rows]
 
 
@@ -51,7 +51,7 @@ def seed_via_api() -> Dict[str, int]:
 
 @router.get("/{supplier_id}", response_model=SupplierResponse)
 def get_supplier(supplier_id: int) -> SupplierResponse:
-    row = suppliers_db.get_supplier(supplier_id)
+    row = database.get_supplier(supplier_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Supplier not found")
     return _as_response(row)
@@ -59,7 +59,7 @@ def get_supplier(supplier_id: int) -> SupplierResponse:
 
 @router.patch("/{supplier_id}/rate", response_model=SupplierResponse)
 def update_rate(supplier_id: int, payload: RateUpdate) -> SupplierResponse:
-    updated = suppliers_db.update_supplier(
+    updated = database.update_supplier(
         supplier_id,
         {
             "rate_per_unit": payload.rate_per_unit,
@@ -73,7 +73,7 @@ def update_rate(supplier_id: int, payload: RateUpdate) -> SupplierResponse:
 
 @router.patch("/{supplier_id}/status", response_model=SupplierResponse)
 def update_status(supplier_id: int, payload: StatusUpdate) -> SupplierResponse:
-    updated = suppliers_db.update_supplier(
+    updated = database.update_supplier(
         supplier_id,
         {"status": payload.status.value},
     )
@@ -84,5 +84,5 @@ def update_status(supplier_id: int, payload: StatusUpdate) -> SupplierResponse:
 
 @router.delete("/{supplier_id}", status_code=204)
 def delete_supplier(supplier_id: int) -> None:
-    if not suppliers_db.delete_supplier(supplier_id):
+    if not database.delete_supplier(supplier_id):
         raise HTTPException(status_code=404, detail="Supplier not found")

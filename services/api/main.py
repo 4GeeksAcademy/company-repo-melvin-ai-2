@@ -1,12 +1,15 @@
+"""Brasaland FastAPI application entrypoint."""
+
 from contextlib import asynccontextmanager
+from typing import Dict
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers.incidents import router as incidents_router
-from app.routers.suppliers import router as suppliers_router
-from app.suppliers.db import count_suppliers
-from app.suppliers.seeder import run_seed
+from database import count_suppliers
+from routes.suppliers import router as suppliers_router
+from seed import run_seed
 
 
 @asynccontextmanager
@@ -45,5 +48,5 @@ app.include_router(suppliers_router)
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
+def health() -> Dict[str, str]:
     return {"status": "ok"}

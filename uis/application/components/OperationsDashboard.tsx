@@ -3,7 +3,7 @@ import {
   sampleMenuItems,
   sampleSales,
   sampleWasteRecords,
-} from "../../../../src/data/sampleOperations";
+} from "../../../src/data/sampleOperations";
 import {
   calculateAverageTicket,
   calculateCountryComparison,
@@ -11,7 +11,7 @@ import {
   calculateWasteCost,
   findTopSellingItems,
   rankLocationsByPerformance,
-} from "../../../../src/utils/transformations";
+} from "../../../src/utils/transformations";
 import { MetricCard } from "./MetricCard";
 
 const usd = new Intl.NumberFormat("en-US", {

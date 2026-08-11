@@ -2,7 +2,7 @@
 
 ## Architecture
 - `uis/website`: public Next.js App Router application.
-- `uis/backoffice`: internal Next.js App Router application with a distinct layout.
+- `uis/application`: internal Next.js App Router application with a distinct layout.
 - `src`: canonical TypeScript domain models, sample data, and pure operations utilities.
 - `services`: the only allowed location for APIs and background services.
 - `packages` and `shared`: reusable libraries and non-code assets as the project grows.

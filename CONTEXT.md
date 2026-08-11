@@ -8,11 +8,11 @@ Brasaland promises consistent product quality, warm service, and speed. It opera
 
 ## What We Are Building
 - An improved public website and Brasa Points registration experience in `uis/website`.
-- An internal operations entry point in `uis/backoffice`.
+- An internal operations / supplier-directory UI in `uis/application`.
 - Reusable TypeScript business logic for sales, margins, waste, and location performance.
 - Persistent memory, rules, and skills that keep future agent work aligned with Brasaland.
 - Company File Analyzer / Incident Report Processor (see [`memory-bank/company-file-analyzer.md`](./memory-bank/company-file-analyzer.md) for schema, invalidation rules, and **100-row** sample expected metrics).
-- Supplier Directory (TinyDB + FastAPI + backoffice UI; see [`memory-bank/supplier-directory.md`](./memory-bank/supplier-directory.md) for schema, seed data, and Lucía’s frontend requirements).
+- Supplier Directory (TinyDB + FastAPI + application UI; see [`memory-bank/supplier-directory.md`](./memory-bank/supplier-directory.md) for schema, seed data, and Lucía’s frontend requirements).
 
 ## Constraints
 - Treat this file and `memory-bank/` as the business source of truth.

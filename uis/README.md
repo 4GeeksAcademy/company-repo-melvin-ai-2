@@ -5,7 +5,7 @@ This folder contains **all projects with a user interface** for the cross-functi
 The runnable applications are:
 
 - **`website`** — the public corporate and Brasa Points experience. Run with `cd uis/website && npm run dev`.
-- **`backoffice`** — the internal operations entry point (Milestone 2 metrics) plus **Supplier directory** at `/suppliers`. Run with `cd uis/backoffice && npm run dev` (port **3101**; API on **8000**). CONTEXT: [`memory-bank/supplier-directory.md`](../memory-bank/supplier-directory.md).
+- **`application`** — internal operations overview plus **Supplier directory** at `/suppliers` (submission layout). Run with `cd uis/application && npm run dev` (port **3101**; API on **8000**). CONTEXT: [`memory-bank/supplier-directory.md`](../memory-bank/supplier-directory.md).
 - **`web`** — internal web tools including **Incident analysis** (Phase 2 Company File Analyzer). Run with `cd uis/web && npm run dev` (API must be up; see `services/api`). Uses the **100-row** sample `scripts/incidents-brasaland.csv`; assignment context: [`memory-bank/company-file-analyzer.md`](../memory-bank/company-file-analyzer.md).
 
 Organize `uis/` by **different concerns** — each subfolder covers a distinct area of the company (for example, public web vs internal operations) and includes its own technical and functional documentation.

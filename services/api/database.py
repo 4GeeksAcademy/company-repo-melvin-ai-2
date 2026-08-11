@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from tinydb import Query, TinyDB
 
-DB_PATH = Path(__file__).resolve().parents[2] / "data" / "suppliers.json"
+DB_PATH = Path(__file__).resolve().parent / "data" / "suppliers.json"
 
 
 def get_db() -> TinyDB:
