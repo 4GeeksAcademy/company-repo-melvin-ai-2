@@ -54,7 +54,7 @@ You are building **one company** across many milestones and projects. Each top-l
 This repository is configured for Brasaland and now includes persistent agent context, governance rules, a reusable delivery skill, two runnable Next.js applications, and the canonical Milestone 2 TypeScript operations module.
 
 - `uis/website` contains the public corporate and Brasa Points experience.
-- `uis/application` contains the internal operations dashboard and supplier directory.
+- `uis/backoffice` contains the internal operations dashboard and supplier directory.
 - `src` contains imported domain models, sample data, and pure business calculations.
 - `memory-bank`, `AGENTS.md`, `.agents/rules`, and `.agents/skills` define how future agents work safely.
 

@@ -1,7 +1,7 @@
 # Progress
 
 ## Current Milestone
-Supplier Directory — TinyDB + FastAPI CRUD and `uis/application` UI on branch `Supplier_directory`.
+Supplier Directory — TinyDB + FastAPI CRUD and `uis/backoffice` UI on branch `Supplier_directory`.
 
 ## Completed
 - Added the business and technical memory bank, root agent workflow, scoped rules, and delivery-verification skill.
@@ -12,14 +12,14 @@ Supplier Directory — TinyDB + FastAPI CRUD and `uis/application` UI on branch 
 - Restored the canonical Milestone 2 models, sample data, and pure utilities under root `src`.
 - Built a distinct backoffice operations dashboard that imports and visibly renders those utilities.
 - Delivered Company File Analyzer Phase 1 + Phase 2 (CLI, API, `uis/web`).
-- Delivered Supplier Directory: CONTEXT in `memory-bank/supplier-directory.md`, TinyDB seeder (15 suppliers), FastAPI `/suppliers` CRUD, `uis/application/app/suppliers` UI (filters, create, rate, status).
+- Delivered Supplier Directory: CONTEXT in `memory-bank/supplier-directory.md`, TinyDB seeder (15 suppliers), FastAPI `/suppliers` CRUD, `uis/backoffice/app/suppliers` UI (filters, create, rate, status).
 
 ## Verification
 - `uis/website`: lint passed; Next.js production build passed.
-- `uis/application`: lint passed; Next.js production build passed (includes `/suppliers`).
+- `uis/backoffice`: lint passed; Next.js production build passed (includes `/suppliers`).
 - Supplier API smoke tests: seed inserts 15; list/filter; 422 on currency/category errors; rate PATCH sets `updated_at`; seeder idempotent.
-- Development smoke tests returned HTTP 200 with expected visible content for website `/`, website `/brasa-points`, and application `/`.
-- Application calculations are imported from root `src`; no calculation implementation was copied into the UI.
+- Development smoke tests returned HTTP 200 with expected visible content for website `/`, website `/brasa-points`, and backoffice `/`.
+- Backoffice calculations are imported from root `src`; no calculation implementation was copied into the UI.
 
 ## Next Steps
 - Optional polish: auth for internal tools, persistence beyond in-memory last analysis.
@@ -39,7 +39,7 @@ Supplier Directory — TinyDB + FastAPI CRUD and `uis/application` UI on branch 
 - UI: `uis/web` Incident analysis page.
 
 ## Supplier Directory
-- Submission layout: `services/api/{main,models,database,seed}.py` + `routes/suppliers.py`; UI at `uis/application/app/suppliers/`.
+- Submission layout: `services/api/{main,models,database,seed}.py` + `routes/suppliers.py`; UI at `uis/backoffice/app/suppliers/`.
 - Idempotent seeder (`uv run seed` / `python seed.py`); auto-seed on empty startup; TinyDB at `data/suppliers.json`.
 - Endpoints: `POST/GET /suppliers`, `GET /suppliers/{id}`, `PATCH .../rate`, `PATCH .../status`, `DELETE /suppliers/{id}`.
-- Application UI: port **3101**, `/suppliers` (table with CONTEXT fields, filters, create, rate, status).
+- Backoffice UI: port **3101**, `/suppliers` (table with CONTEXT fields, filters, create, rate, status).

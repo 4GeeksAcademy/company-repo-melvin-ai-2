@@ -60,4 +60,4 @@ Health: `GET http://localhost:8000/health` · Docs: `http://localhost:8000/docs`
 | `PATCH` | `/suppliers/{id}/status` | Update status |
 | `DELETE` | `/suppliers/{id}` | Delete |
 
-Frontend: `uis/application` on port **3101** (`/suppliers`).
+Frontend: `uis/backoffice` on port **3101** (`/suppliers`).

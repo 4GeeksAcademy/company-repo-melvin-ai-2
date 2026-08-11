@@ -1,9 +1,9 @@
-# Brasaland Application (`uis/application`)
+# Brasaland Backoffice (`uis/backoffice`)
 
-Internal Next.js workspace matching the Supplier Directory submission layout:
+Internal Next.js workspace for Brasaland operations and the Supplier Directory.
 
 ```text
-uis/application/
+uis/backoffice/
   app/
     suppliers/
 ```
@@ -26,7 +26,7 @@ uvicorn main:app --reload --port 8000
 Then:
 
 ```bash
-cd uis/application
+cd uis/backoffice
 npm install
 npm run dev
 ```
