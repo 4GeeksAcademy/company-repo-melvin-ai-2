@@ -1,7 +1,7 @@
 # Progress
 
 ## Current Milestone
-Company File Analyzer / Incident Report Processor — Phase 1 CLI and Phase 2 API + `uis/web` delivered.
+Supplier Directory — TinyDB + FastAPI CRUD and backoffice UI on branch `Supplier_directory`.
 
 ## Completed
 - Added the business and technical memory bank, root agent workflow, scoped rules, and delivery-verification skill.
@@ -11,31 +11,34 @@ Company File Analyzer / Incident Report Processor — Phase 1 CLI and Phase 2 AP
 - Added the validated Brasa Points registration route at `/brasa-points`.
 - Restored the canonical Milestone 2 models, sample data, and pure utilities under root `src`.
 - Built a distinct backoffice operations dashboard that imports and visibly renders those utilities.
+- Delivered Company File Analyzer Phase 1 + Phase 2 (CLI, API, `uis/web`).
+- Delivered Supplier Directory: CONTEXT in `memory-bank/supplier-directory.md`, TinyDB seeder (15 suppliers), FastAPI `/suppliers` CRUD, backoffice `/suppliers` UI (filters, create, rate, status).
 
 ## Verification
 - `uis/website`: lint passed; Next.js production build passed.
-- `uis/backoffice`: lint passed; Next.js production build passed.
+- `uis/backoffice`: lint passed; Next.js production build passed (includes `/suppliers`).
+- Supplier API smoke tests: seed inserts 15; list/filter; 422 on currency/category errors; rate PATCH sets `updated_at`; seeder idempotent.
 - Development smoke tests returned HTTP 200 with expected visible content for website `/`, website `/brasa-points`, and backoffice `/`.
 - Backoffice calculations are imported from root `src`; no calculation implementation was copied into the UI.
-- Repository diff check and editor diagnostics passed.
 
 ## Next Steps
 - Optional polish: auth for internal tools, persistence beyond in-memory last analysis.
 - Future milestones may still add Brasa Points persistence, backoffice authentication, inventory forecasting, and People & Talent workflows.
 
 ## Documentation
-- Updated `docs/ARCHITECTURE_PROPOSAL.md` into a CTO-facing FastAPI backend proposal: layered domain architecture, `services/api` module layout, operations-first routers, FE/BE separation (monorepo, env, CORS), Milestone 2 TS→Python porting strategy, and risks — with no database choice and auth deferred for v1.
-- Added `docs/ARCHITECTURE_PROPOSAL_READABLE.md` (plain-language summary) and `docs/ARCHITECTURE_PROPOSAL.pdf` (printable export of that summary).
-- Moved Company File Analyzer assignment context to `memory-bank/company-file-analyzer.md` (schema, invalidation rules, **100-row** expected metrics); root `CONTEXT.md` points there for this assignment.
+- Updated `docs/ARCHITECTURE_PROPOSAL.md` into a CTO-facing FastAPI backend proposal.
+- Company File Analyzer CONTEXT: `memory-bank/company-file-analyzer.md`.
+- Supplier Directory CONTEXT: `memory-bank/supplier-directory.md` (root `CONTEXT.md` points there; `scripts/CONTEXT-brasaland.en.md` is a pointer).
 
 ## Incident Report Processor (Phase 1)
-- Sample CSV for submission layout: `scripts/incidents-brasaland.csv` (**100-row** grading sample; mirrors `incidents-COMPANY.csv` in the brief).
-- Added `scripts/analyze.py` using rules documented in `memory-bank/company-file-analyzer.md` (aligned with `.agents/rules/incident-report-processor/context.md`).
-- Verified against expected values: 100 total, 96 valid, 4 invalid; category/status breakdowns and average satisfaction **3.46** match the assignment context.
+- Sample CSV: `scripts/incidents-brasaland.csv` (**100-row** grading sample).
+- CLI: `scripts/analyze.py` — verified 100/96/4 and average satisfaction **3.46**.
 
 ## Incident Report Processor (Phase 2)
-- Shared analysis module: `services/api/app/incidents/analysis.py` (used by CLI + API).
-- FastAPI: `POST /api/incidents/analyze`, `GET /api/incidents/results/export` under `services/api`.
-- Next.js app `uis/web` with Incident analysis page (upload, summary, invalid breakdown, CSV download).
-- Verification: API TestClient against the 100-row sample returned CONTEXT metrics (100/96/4, avg 3.46); `uis/web` production build passed.
-- Reporting gap closed: CLI, UI, and CSV export now surface all six invalid-rule counts (including `missing_reporter_id` and `score_out_of_range`, both 0 on the sample).
+- Shared analysis module + FastAPI endpoints under `services/api`.
+- UI: `uis/web` Incident analysis page.
+
+## Supplier Directory
+- Models + TinyDB at `services/api/app/suppliers/`; idempotent seeder (`python seed.py` / `uv run seed`); auto-seed on empty startup.
+- Endpoints: `POST/GET /suppliers`, `GET /suppliers/{id}`, `PATCH .../rate`, `PATCH .../status`, `DELETE /suppliers/{id}`.
+- Backoffice: `uis/backoffice` port **3101**, page `/suppliers` (table, country/category filters, create form, inline rate + status).
