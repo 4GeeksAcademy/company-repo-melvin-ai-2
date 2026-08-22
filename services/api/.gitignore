@@ -6,3 +6,6 @@ __pycache__/
 *.egg-info/
 .env
 .DS_Store
+data/
+*.json
+!requirements.txt

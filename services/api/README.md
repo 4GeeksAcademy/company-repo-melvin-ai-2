@@ -1,8 +1,23 @@
-# Brasaland Incident API (`services/api`)
+# Brasaland API (`services/api`)
 
-FastAPI service that runs the same Brasaland incident validation and metrics as Phase 1 (`scripts/analyze.py`), using shared logic in `app/incidents/analysis.py`.
+Submission layout (Supplier Directory):
 
-Grading acceptance for this assignment uses the **100-row** sample at `scripts/incidents-brasaland.csv` (see [`memory-bank/company-file-analyzer.md`](../../memory-bank/company-file-analyzer.md)).
+```text
+services/api/
+  main.py
+  models.py
+  database.py
+  routes/
+    suppliers.py
+  seed.py
+```
+
+Also keeps the Incident Report Processor under `app/incidents/` + `app/routers/incidents.py`.
+
+Canonical CONTEXT:
+
+- Suppliers: [`memory-bank/supplier-directory.md`](../../memory-bank/supplier-directory.md)
+- Incidents: [`memory-bank/company-file-analyzer.md`](../../memory-bank/company-file-analyzer.md)
 
 ## Setup
 
@@ -11,27 +26,38 @@ cd services/api
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+pip install -e .
 ```
+
+Or with uv: `uv sync`
+
+## Seed suppliers
+
+```bash
+uv run seed
+# or
+python seed.py
+```
+
+On API startup, if TinyDB is empty, the same seeder runs automatically. Data file: `data/suppliers.json`.
 
 ## Run
 
-From `services/api`:
-
 ```bash
-uvicorn app.main:app --reload --port 8000
+uvicorn main:app --reload --port 8000
 ```
 
-Health check: `GET http://localhost:8000/health`
+Health: `GET http://localhost:8000/health` · Docs: `http://localhost:8000/docs`
 
-## Endpoints
+## Supplier endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/incidents/analyze` | Upload a CSV (`multipart/form-data` field `file`); returns JSON summary |
-| `GET` | `/api/incidents/results/export` | Download the most recent analysis as `results.csv` |
+| `POST` | `/suppliers` | Create supplier |
+| `GET` | `/suppliers` | List; optional `?country=` / `?category=` |
+| `GET` | `/suppliers/{id}` | Get one |
+| `PATCH` | `/suppliers/{id}/rate` | Update rate + `updated_at` |
+| `PATCH` | `/suppliers/{id}/status` | Update status |
+| `DELETE` | `/suppliers/{id}` | Delete |
 
-Errors (empty file, wrong extension, bad encoding, missing columns) return `400` with a descriptive `detail` message. Export without a prior analysis returns `404`.
-
-## Context
-
-Field names, categories (`CUSTOMER_COMPLAINT`, `EQUIPMENT`, `SUPPLY`, `FOOD_QUALITY`, `STAFF`), statuses (`OPEN`, `CLOSED`, `DISCARDED`), invalidation rules, and expected metrics for the **100-row** sample are documented in [`memory-bank/company-file-analyzer.md`](../../memory-bank/company-file-analyzer.md).
+Frontend: `uis/backoffice` on port **3101** (`/suppliers`).
