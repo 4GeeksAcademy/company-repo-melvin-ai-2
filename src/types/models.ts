@@ -6,7 +6,6 @@ export interface Price {
 }
 
 export type MenuCategory = "Meat" | "Side" | "Beverage" | "Dessert" | "Combo";
-
 export type MenuItemStatus = "Active" | "Seasonal" | "Discontinued";
 
 export interface MenuItem {
@@ -36,7 +35,6 @@ export interface SaleTransaction {
 }
 
 export type Country = "Colombia" | "USA";
-
 export type LocationStatus = "Active" | "Temporarily closed" | "Under renovation";
 
 export interface Location {
