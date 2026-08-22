@@ -57,6 +57,12 @@ export default function Home() {
             </div>
           </div>
           <OperationsDashboard />
+          <section id="people" className="people-panel" aria-label="People and talent">
+            <h2>People &amp; Talent</h2>
+            <p>
+              Talent and hiring insights will appear here in the next milestone.
+            </p>
+          </section>
         </main>
       </div>
     </div>
