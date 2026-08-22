@@ -45,11 +45,7 @@ export function OperationsDashboard() {
 
   return (
     <>
-      <section
-        id="sales"
-        className="metric-grid"
-        aria-label="Operations summary"
-      >
+      <section className="metric-grid" aria-label="Operations summary">
         <MetricCard
           label="Recorded revenue"
           value={usd.format(totalRevenue)}
@@ -75,7 +71,7 @@ export function OperationsDashboard() {
       </section>
 
       <div className="dashboard-grid">
-        <section id="locations" className="panel performance-panel">
+        <section className="panel performance-panel">
           <div className="panel-heading">
             <div>
               <p className="kicker">Location intelligence</p>
@@ -123,7 +119,7 @@ export function OperationsDashboard() {
           </div>
         </section>
 
-        <aside id="waste" className="panel top-items">
+        <aside className="panel top-items">
           <div className="panel-heading">
             <div>
               <p className="kicker">Menu pulse</p>

@@ -1,7 +1,7 @@
 # Progress
 
 ## Current Milestone
-Establish the Brasaland agent infrastructure and deliver the first runnable public and internal Next.js applications.
+Company File Analyzer / Incident Report Processor — Phase 1 CLI and Phase 2 API + `uis/web` delivered.
 
 ## Completed
 - Added the business and technical memory bank, root agent workflow, scoped rules, and delivery-verification skill.
@@ -20,8 +20,22 @@ Establish the Brasaland agent infrastructure and deliver the first runnable publ
 - Repository diff check and editor diagnostics passed.
 
 ## Next Steps
-Future milestones may add a centralized API under `services`, persistence for Brasa Points, authentication for the backoffice, inventory forecasting, and People & Talent workflows.
+- Optional polish: auth for internal tools, persistence beyond in-memory last analysis.
+- Future milestones may still add Brasa Points persistence, backoffice authentication, inventory forecasting, and People & Talent workflows.
 
 ## Documentation
 - Updated `docs/ARCHITECTURE_PROPOSAL.md` into a CTO-facing FastAPI backend proposal: layered domain architecture, `services/api` module layout, operations-first routers, FE/BE separation (monorepo, env, CORS), Milestone 2 TS→Python porting strategy, and risks — with no database choice and auth deferred for v1.
 - Added `docs/ARCHITECTURE_PROPOSAL_READABLE.md` (plain-language summary) and `docs/ARCHITECTURE_PROPOSAL.pdf` (printable export of that summary).
+- Moved Company File Analyzer assignment context to `memory-bank/company-file-analyzer.md` (schema, invalidation rules, **100-row** expected metrics); root `CONTEXT.md` points there for this assignment.
+
+## Incident Report Processor (Phase 1)
+- Sample CSV for submission layout: `scripts/incidents-brasaland.csv` (**100-row** grading sample; mirrors `incidents-COMPANY.csv` in the brief).
+- Added `scripts/analyze.py` using rules documented in `memory-bank/company-file-analyzer.md` (aligned with `.agents/rules/incident-report-processor/context.md`).
+- Verified against expected values: 100 total, 96 valid, 4 invalid; category/status breakdowns and average satisfaction **3.46** match the assignment context.
+
+## Incident Report Processor (Phase 2)
+- Shared analysis module: `services/api/app/incidents/analysis.py` (used by CLI + API).
+- FastAPI: `POST /api/incidents/analyze`, `GET /api/incidents/results/export` under `services/api`.
+- Next.js app `uis/web` with Incident analysis page (upload, summary, invalid breakdown, CSV download).
+- Verification: API TestClient against the 100-row sample returned CONTEXT metrics (100/96/4, avg 3.46); `uis/web` production build passed.
+- Reporting gap closed: CLI, UI, and CSV export now surface all six invalid-rule counts (including `missing_reporter_id` and `score_out_of_range`, both 0 on the sample).

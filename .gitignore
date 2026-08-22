@@ -10,3 +10,6 @@ coverage/
 .DS_Store
 __pycache__/
 *.py[cod]
+
+# Incident analyzer export
+results.csv
