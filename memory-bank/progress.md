@@ -1,7 +1,7 @@
 # Progress
 
 ## Current Milestone
-Supplier Directory — TinyDB + FastAPI CRUD and `uis/backoffice` UI on branch `Supplier_directory`.
+Brasaland Identity — planning complete; implementation not started. Follow [`docs/masterplan.md`](../docs/masterplan.md) on branch `feature/brasaland-auth`, Sprint 1 first.
 
 ## Completed
 - Added the business and technical memory bank, root agent workflow, scoped rules, and delivery-verification skill.
@@ -13,6 +13,7 @@ Supplier Directory — TinyDB + FastAPI CRUD and `uis/backoffice` UI on branch `
 - Built a distinct backoffice operations dashboard that imports and visibly renders those utilities.
 - Delivered Company File Analyzer Phase 1 + Phase 2 (CLI, API, `uis/web`).
 - Delivered Supplier Directory: CONTEXT in `memory-bank/supplier-directory.md`, TinyDB seeder (15 suppliers), FastAPI `/suppliers` CRUD, `uis/backoffice/app/suppliers` UI (filters, create, rate, status).
+- Wrote Brasaland Identity master plan at `docs/masterplan.md` (one branch, three sprint checklists; no auth implementation yet).
 
 ## Verification
 - `uis/website`: lint passed; Next.js production build passed.
@@ -20,15 +21,19 @@ Supplier Directory — TinyDB + FastAPI CRUD and `uis/backoffice` UI on branch `
 - Supplier API smoke tests: seed inserts 15; list/filter; 422 on currency/category errors; rate PATCH sets `updated_at`; seeder idempotent.
 - Development smoke tests returned HTTP 200 with expected visible content for website `/`, website `/brasa-points`, and backoffice `/`.
 - Backoffice calculations are imported from root `src`; no calculation implementation was copied into the UI.
+- Brasaland Identity planning pass: documentation only (`docs/masterplan.md`, `memory-bank/progress.md`). No API or UI auth code. No protected paths changed.
 
 ## Next Steps
-- Optional polish: auth for internal tools, persistence beyond in-memory last analysis.
-- Future milestones may still add Brasa Points persistence, backoffice authentication, inventory forecasting, and People & Talent workflows.
+- Implement Brasaland Identity **Sprint 1 (AUTH-01)** from [`docs/masterplan.md`](../docs/masterplan.md): TinyDB User + Profile, JWT, protect suppliers and incident routes, seed Lucía Fernández as admin. Do not start Sprint 2 until Sprint 1’s checklist passes.
+- Sprint 2: `@repo/auth` + thin routes in backoffice, incident web, and talent tracker (Playground candidate API unchanged).
+- Sprint 3: Resend password reset and change-password.
+- Optional later: persistence beyond in-memory last incident analysis; Brasa Points persistence; inventory forecasting.
 
 ## Documentation
 - Updated `docs/ARCHITECTURE_PROPOSAL.md` into a CTO-facing FastAPI backend proposal.
 - Company File Analyzer CONTEXT: `memory-bank/company-file-analyzer.md`.
 - Supplier Directory CONTEXT: `memory-bank/supplier-directory.md` (root `CONTEXT.md` points there; `scripts/CONTEXT-brasaland.en.md` is a pointer).
+- Brasaland Identity master plan: [`docs/masterplan.md`](../docs/masterplan.md) (AUTH-01 / AUTH-02 / AUTH-03 combined; no auth code in this pass).
 
 ## Incident Report Processor (Phase 1)
 - Sample CSV: `scripts/incidents-brasaland.csv` (**100-row** grading sample).
