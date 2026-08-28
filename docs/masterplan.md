@@ -367,6 +367,8 @@ Forgot / reset / change work; tokens expire and are one-time; forgot-password do
 
 ## Rubric map
 
+The full grade sheet (every **What We Will Evaluate** item from the three syllabi, plus Brasaland locks) is [`Global_Criteria.md`](./Global_Criteria.md).
+
 **Sprint 1:** User CRUD; Profile 1:1; role enum + default `user`; hashed passwords; JWT; `get_current_user`; `401` / `403`; env expiry/secret; `/auth` `/users` `/profiles`; ≥5 existing routes locked; TinyDB-only users; no regression with a valid token.
 
 **Sprint 2:** login/register store token; guards; website public; profile via `/auth/me` and `PUT /profiles/me`; logout; `401` clears session; Playground candidate calls unchanged.

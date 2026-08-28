@@ -1,3 +1,5 @@
+import { authFetch } from "@repo/auth";
+
 export type CountRow = {
   count: number;
   percentage: number;
@@ -37,21 +39,13 @@ export type AnalysisSummary = {
   };
 };
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
-  "http://localhost:8000";
-
-export function getApiBase(): string {
-  return API_BASE;
-}
-
 export async function analyzeIncidentsCsv(
   file: File,
 ): Promise<AnalysisSummary> {
   const body = new FormData();
   body.append("file", file);
 
-  const response = await fetch(`${API_BASE}/api/incidents/analyze`, {
+  const response = await authFetch(`/api/incidents/analyze`, {
     method: "POST",
     body,
   });
@@ -70,6 +64,23 @@ export async function analyzeIncidentsCsv(
   return (await response.json()) as AnalysisSummary;
 }
 
-export function exportResultsUrl(): string {
-  return `${API_BASE}/api/incidents/results/export`;
+export async function downloadResultsCsv(): Promise<void> {
+  const response = await authFetch("/api/incidents/results/export");
+  if (!response.ok) {
+    let detail = `Download failed (${response.status})`;
+    try {
+      const payload = (await response.json()) as { detail?: string };
+      if (payload.detail) detail = payload.detail;
+    } catch {
+      /* keep default */
+    }
+    throw new Error(detail);
+  }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "results.csv";
+  link.click();
+  URL.revokeObjectURL(url);
 }

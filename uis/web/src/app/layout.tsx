@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AuthRoot } from "@repo/auth";
 import { AppHeader } from "@/components/AppHeader";
 import "./globals.css";
 
@@ -15,11 +16,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <a className="skip-link" href="#main">
-          Skip to content
-        </a>
-        <AppHeader />
-        <main id="main">{children}</main>
+        <AuthRoot>
+          <a className="skip-link" href="#main">
+            Skip to content
+          </a>
+          <AppHeader />
+          <main id="main">{children}</main>
+        </AuthRoot>
       </body>
     </html>
   );

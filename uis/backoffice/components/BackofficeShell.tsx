@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SessionNav } from "@repo/auth";
 
 type BackofficeShellProps = {
   children: React.ReactNode;
@@ -49,11 +50,12 @@ export function BackofficeShell({ children }: BackofficeShellProps) {
           </Link>
         </nav>
         <div className="sidebar-foot">
-          <span>MR</span>
+          <span>LF</span>
           <div>
-            <strong>Mariana Restrepo</strong>
-            <small>Operations admin</small>
+            <strong>Signed in</strong>
+            <small>Brasaland operator</small>
           </div>
+          <SessionNav />
         </div>
       </aside>
 

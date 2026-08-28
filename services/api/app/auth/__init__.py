@@ -1,0 +1,1 @@
+"""Brasaland JWT authentication."""

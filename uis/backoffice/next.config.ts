@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname, "../.."),
+  transpilePackages: ["@repo/auth"],
   turbopack: {
     root: path.join(__dirname, "../.."),
   },

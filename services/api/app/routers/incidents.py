@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import Response
+
+from app.auth.deps import get_current_user
 
 from app.incidents.analysis import (
     IncidentAnalysisError,
@@ -11,7 +13,11 @@ from app.incidents.analysis import (
 )
 from app.incidents.store import get_last_result, save_last_result
 
-router = APIRouter(prefix="/api/incidents", tags=["incidents"])
+router = APIRouter(
+    prefix="/api/incidents",
+    tags=["incidents"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 def _validate_upload(filename: str | None, content_type: str | None) -> None:

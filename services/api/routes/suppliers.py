@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.auth.deps import get_current_user
 import database
 from models import (
     RateUpdate,
@@ -16,7 +17,11 @@ from models import (
 )
 from seed import run_seed
 
-router = APIRouter(prefix="/suppliers", tags=["suppliers"])
+router = APIRouter(
+    prefix="/suppliers",
+    tags=["suppliers"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 def _as_response(row: dict) -> SupplierResponse:

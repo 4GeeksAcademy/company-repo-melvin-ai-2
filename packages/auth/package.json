@@ -1,0 +1,25 @@
+{
+  "name": "@repo/auth",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared Brasaland JWT auth client, forms, and route guard for internal Next.js apps.",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./styles.css": "./styles.css"
+  },
+  "peerDependencies": {
+    "next": ">=14",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "next": "16.2.11",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "typescript": "^5"
+  }
+}

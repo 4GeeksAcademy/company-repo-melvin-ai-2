@@ -1,7 +1,7 @@
 # Progress
 
 ## Current Milestone
-Brasaland Identity — planning complete; implementation not started. Follow [`docs/masterplan.md`](../docs/masterplan.md) on branch `feature/brasaland-auth`, Sprint 1 first.
+Brasaland Identity graded against `docs/Global_Criteria.md` on `feature/brasaland-auth`: **37/37 required items Pass**. Lucía cannot receive Resend mail until a domain is verified (out of scope).
 
 ## Completed
 - Added the business and technical memory bank, root agent workflow, scoped rules, and delivery-verification skill.
@@ -13,27 +13,34 @@ Brasaland Identity — planning complete; implementation not started. Follow [`d
 - Built a distinct backoffice operations dashboard that imports and visibly renders those utilities.
 - Delivered Company File Analyzer Phase 1 + Phase 2 (CLI, API, `uis/web`).
 - Delivered Supplier Directory: CONTEXT in `memory-bank/supplier-directory.md`, TinyDB seeder (15 suppliers), FastAPI `/suppliers` CRUD, `uis/backoffice/app/suppliers` UI (filters, create, rate, status).
-- Wrote Brasaland Identity master plan at `docs/masterplan.md` (one branch, three sprint checklists; no auth implementation yet).
+- Wrote Brasaland Identity master plan at `docs/masterplan.md` (one branch, three sprint checklists).
+- Sprint 1 AUTH-01: TinyDB User/Profile, JWT, `get_current_user`, protected suppliers + incidents, seeded Lucía Fernández as admin.
+- Sprint 2 AUTH-02: `@repo/auth` shared package; login/register/profile + client guard in backoffice, incident web, and talent tracker; Bearer on Brasaland API calls; Playground candidate API unchanged; website untouched.
+- Sprint 3 AUTH-03: forgot/reset/change-password API + `@repo/auth` forms and thin routes; reset tokens hashed in TinyDB (expiry + one-time); Resend wired behind `RESEND_API_KEY`.
 
 ## Verification
 - `uis/website`: lint passed; Next.js production build passed.
-- `uis/backoffice`: lint passed; Next.js production build passed (includes `/suppliers`).
+- `uis/backoffice`: lint passed; Next.js production build passed (includes `/login`, `/register`, `/account/profile`, `/suppliers`).
+- `uis/web`: lint passed; Next.js production build passed (includes `/login`, `/incidents`).
+- `uis/talent-pipeline-tracker`: lint passed; Next.js production build passed (includes `/login` and candidate routes).
 - Supplier API smoke tests: seed inserts 15; list/filter; 422 on currency/category errors; rate PATCH sets `updated_at`; seeder idempotent.
 - Development smoke tests returned HTTP 200 with expected visible content for website `/`, website `/brasa-points`, and backoffice `/`.
 - Backoffice calculations are imported from root `src`; no calculation implementation was copied into the UI.
-- Brasaland Identity planning pass: documentation only (`docs/masterplan.md`, `memory-bank/progress.md`). No API or UI auth code. No protected paths changed.
+- Brasaland Identity Sprint 1 API checks (curl against `:8000`): `GET /health` 200 public; `/suppliers` and incident analyze 401 without token; Lucía login 200; `GET /auth/me` returns Lucía + Profile; `/suppliers` 200 with Bearer (15 rows); register `POST /users` 201 role `user`; other user GET/PUT 403; malformed token 401; `/docs` 200. Developer confirmed Swagger Authorize as Lucía.
+- Sprint 2: production builds for the three internal apps passed. Public website files were not changed.
+- Sprint 3 re-check: API forgot always 200 with identical bodies; reset one-time + expired 400; change-password wrong-current 400 then success; Lucía seed login still works. Resend key loaded: Yahoo forgot-password 200 with no Resend exception; Lucía send still refused by onboarding (only `ewell_melvin@yahoo.com`). UI: forgot link, generic confirmation, reset without token, reset success → `/login`, change-password mismatch; website public. Earlier browser log already showed Yahoo forgot → reset 200 → login 200.
+- Global_Criteria live grade (2026-08-27): API FAIL COUNT 0 (CRUD, Profile 1:1, JWT, 401/403, TinyDB bcrypt, suppliers 15, incident analyze+export, forgot/reset/change-password, env secrets). Browser FAIL COUNT 0 (register token, logout, guards, website `/` and `/brasa-points`, profile save, 401 redirect, Lucía suppliers + incidents, Playground with no Bearer, forgot/reset/change-password UI). Score: Part 1 13/13, Part 2 9/9, Part 3 15/15, **total 37/37 Pass**.
 
 ## Next Steps
-- Implement Brasaland Identity **Sprint 1 (AUTH-01)** from [`docs/masterplan.md`](../docs/masterplan.md): TinyDB User + Profile, JWT, protect suppliers and incident routes, seed Lucía Fernández as admin. Do not start Sprint 2 until Sprint 1’s checklist passes.
-- Sprint 2: `@repo/auth` + thin routes in backoffice, incident web, and talent tracker (Playground candidate API unchanged).
-- Sprint 3: Resend password reset and change-password.
+- Optional: verify a Resend domain if Lucía (or any non-Yahoo inbox) must receive reset mail. Otherwise Sprint 3 is complete pending developer commit/PR.
 - Optional later: persistence beyond in-memory last incident analysis; Brasa Points persistence; inventory forecasting.
 
 ## Documentation
 - Updated `docs/ARCHITECTURE_PROPOSAL.md` into a CTO-facing FastAPI backend proposal.
 - Company File Analyzer CONTEXT: `memory-bank/company-file-analyzer.md`.
 - Supplier Directory CONTEXT: `memory-bank/supplier-directory.md` (root `CONTEXT.md` points there; `scripts/CONTEXT-brasaland.en.md` is a pointer).
-- Brasaland Identity master plan: [`docs/masterplan.md`](../docs/masterplan.md) (AUTH-01 / AUTH-02 / AUTH-03 combined; no auth code in this pass).
+- Brasaland Identity: [`docs/masterplan.md`](../docs/masterplan.md) and [`docs/master_instructions.md`](../docs/master_instructions.md).
+- API env names: `services/api/.env.example`.
 
 ## Incident Report Processor (Phase 1)
 - Sample CSV: `scripts/incidents-brasaland.csv` (**100-row** grading sample).
