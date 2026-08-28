@@ -9,10 +9,16 @@ dependencies = [
   "python-multipart>=0.0.9",
   "tinydb>=4.8.0",
   "pydantic>=2.7.0",
+  "cryptography==43.0.3",
+  "python-jose[cryptography]>=3.5.0",
+  "libpass[bcrypt]>=1.9.3",
+  "python-dotenv>=1.2.1",
+  "resend>=2.42.0",
 ]
 
 [project.scripts]
 seed = "seed:seed_command"
+seed-auth = "app.auth.seed:seed_command"
 
 [build-system]
 requires = ["hatchling"]

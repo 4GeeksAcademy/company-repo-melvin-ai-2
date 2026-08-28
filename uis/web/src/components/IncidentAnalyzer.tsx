@@ -5,7 +5,7 @@ import { AnalysisSummaryView } from "@/components/AnalysisSummaryView";
 import { FileDropzone } from "@/components/FileDropzone";
 import {
   analyzeIncidentsCsv,
-  exportResultsUrl,
+  downloadResultsCsv,
   type AnalysisSummary,
 } from "@/lib/api";
 
@@ -14,6 +14,7 @@ export function IncidentAnalyzer() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   async function handleFile(file: File) {
     setBusy(true);
@@ -44,9 +45,26 @@ export function IncidentAnalyzer() {
       {summary ? (
         <>
           <div className="actions">
-            <a className="button" href={exportResultsUrl()} download>
-              Download results CSV
-            </a>
+            <button
+              type="button"
+              className="button"
+              disabled={downloading}
+              onClick={async () => {
+                setDownloading(true);
+                setError(null);
+                try {
+                  await downloadResultsCsv();
+                } catch (err) {
+                  setError(
+                    err instanceof Error ? err.message : "Download failed.",
+                  );
+                } finally {
+                  setDownloading(false);
+                }
+              }}
+            >
+              {downloading ? "Downloading…" : "Download results CSV"}
+            </button>
           </div>
           <AnalysisSummaryView summary={summary} />
         </>

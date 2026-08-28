@@ -1,6 +1,4 @@
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
-  "http://localhost:8000";
+import { authFetch } from "@repo/auth";
 
 export type Supplier = {
   id: number;
@@ -51,7 +49,7 @@ export async function listSuppliers(filters?: {
   if (filters?.country) params.set("country", filters.country);
   if (filters?.category) params.set("category", filters.category);
   const suffix = params.toString() ? `?${params}` : "";
-  const response = await fetch(`${API_BASE}/suppliers${suffix}`);
+  const response = await authFetch(`/suppliers${suffix}`);
   if (!response.ok) throw new Error(await parseError(response));
   return (await response.json()) as Supplier[];
 }
@@ -59,7 +57,7 @@ export async function listSuppliers(filters?: {
 export async function createSupplier(
   body: SupplierCreateInput,
 ): Promise<Supplier> {
-  const response = await fetch(`${API_BASE}/suppliers`, {
+  const response = await authFetch(`/suppliers`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -72,7 +70,7 @@ export async function updateSupplierRate(
   id: number,
   rate_per_unit: number,
 ): Promise<Supplier> {
-  const response = await fetch(`${API_BASE}/suppliers/${id}/rate`, {
+  const response = await authFetch(`/suppliers/${id}/rate`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ rate_per_unit }),
@@ -85,7 +83,7 @@ export async function updateSupplierStatus(
   id: number,
   status: "active" | "suspended",
 ): Promise<Supplier> {
-  const response = await fetch(`${API_BASE}/suppliers/${id}/status`, {
+  const response = await authFetch(`/suppliers/${id}/status`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status }),

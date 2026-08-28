@@ -1,0 +1,117 @@
+.ba-auth {
+  width: min(28rem, calc(100% - 2rem));
+  margin: 2rem auto 3rem;
+  padding: 1.5rem;
+  border: 1px solid #d6d1c7;
+  border-radius: 0.6rem;
+  background: #fffdf8;
+  color: #1c1915;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+.ba-auth h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.45rem;
+}
+
+.ba-auth p {
+  margin: 0 0 1.25rem;
+  color: #5c554c;
+}
+
+.ba-auth form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.ba-auth label {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.ba-auth input {
+  font: inherit;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #cfc8ba;
+  border-radius: 0.35rem;
+  background: #fff;
+}
+
+.ba-auth input:focus-visible {
+  outline: 2px solid #0b57d0;
+  outline-offset: 2px;
+}
+
+.ba-auth button[type="submit"] {
+  font: inherit;
+  font-weight: 700;
+  padding: 0.7rem 1rem;
+  border: none;
+  border-radius: 0.35rem;
+  background: #1f5c45;
+  color: #f7faf8;
+  cursor: pointer;
+}
+
+.ba-auth button[type="submit"]:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.ba-auth .ba-notice {
+  color: #1f5c45;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+.ba-auth .ba-error {
+  color: #8a1f1f;
+  font-weight: 600;
+  margin: 0;
+}
+
+.ba-auth .ba-field-error {
+  color: #8a1f1f;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.ba-auth .ba-links {
+  margin: 1rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ba-auth a {
+  color: #1f5c45;
+  font-weight: 600;
+}
+
+.ba-session {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ba-session a,
+.ba-session button {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: inherit;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0.25rem 0.15rem;
+}
+
+.ba-session a:focus-visible,
+.ba-session button:focus-visible {
+  outline: 2px solid #efad4f;
+  outline-offset: 2px;
+}
