@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { FieldErrors } from "./types";
+import { ErrorBanner } from "./ErrorBanner";
 import { useAuthApi } from "./useAuthApi";
 
 type RegisterFormProps = {
@@ -117,11 +118,7 @@ export function RegisterForm({ heading, homePath = "/" }: RegisterFormProps) {
             onChange={(event) => setAddress(event.target.value)}
           />
         </label>
-        {error ? (
-          <p className="ba-error" role="alert">
-            {error}
-          </p>
-        ) : null}
+        {error ? <ErrorBanner message={error} homeHref={homePath} /> : null}
         <button type="submit" disabled={busy}>
           {busy ? "Creating account…" : "Register"}
         </button>

@@ -1,9 +1,10 @@
 # Progress
 
 ## Current Milestone
-Brasaland Identity graded against `docs/Global_Criteria.md` on `feature/brasaland-auth`: **37/37 required items Pass**. Lucía cannot receive Resend mail until a domain is verified (out of scope).
+Error handling audit on `feature/error-handling-audit`: human-readable errors, three-state UI, scoped FastAPI handlers, and script I/O exit codes.
 
 ## Completed
+- Applied a consistent error-handling strategy across `@repo/auth`, backoffice suppliers, incident web, talent tracker, FastAPI, and `scripts/analyze.py` (retry / home / `hello@brasaland.com`; no status codes or stack traces in client messages).
 - Added the business and technical memory bank, root agent workflow, scoped rules, and delivery-verification skill.
 - Reorganized agent config to `.agents/rules/` and `.agents/skills/` (including dual-currency and delivery-verification skills).
 - Added always-on `.agents/rules/company-context.md` so every milestone uses Brasaland only.
@@ -19,6 +20,7 @@ Brasaland Identity graded against `docs/Global_Criteria.md` on `feature/brasalan
 - Sprint 3 AUTH-03: forgot/reset/change-password API + `@repo/auth` forms and thin routes; reset tokens hashed in TinyDB (expiry + one-time); Resend wired behind `RESEND_API_KEY`.
 
 ## Verification
+- Error handling (2026-08-28): `scripts/analyze.py` missing file exits `1`; sample CSV still reports 100/96/4 and average **3.46**. API: `GET /health` 200; malformed login JSON 400 human body; incomplete login 400; `/suppliers` without token 401; register 422 has `loc`/`msg`/`type` only (no `input`). Lint + production build passed for `uis/backoffice`, `uis/web`, and `uis/talent-pipeline-tracker`. Browser click-through of retry CTAs was not run (no browser tools in this session).
 - `uis/website`: lint passed; Next.js production build passed.
 - `uis/backoffice`: lint passed; Next.js production build passed (includes `/login`, `/register`, `/account/profile`, `/suppliers`).
 - `uis/web`: lint passed; Next.js production build passed (includes `/login`, `/incidents`).
@@ -32,8 +34,8 @@ Brasaland Identity graded against `docs/Global_Criteria.md` on `feature/brasalan
 - Global_Criteria live grade (2026-08-27): API FAIL COUNT 0 (CRUD, Profile 1:1, JWT, 401/403, TinyDB bcrypt, suppliers 15, incident analyze+export, forgot/reset/change-password, env secrets). Browser FAIL COUNT 0 (register token, logout, guards, website `/` and `/brasa-points`, profile save, 401 redirect, Lucía suppliers + incidents, Playground with no Bearer, forgot/reset/change-password UI). Score: Part 1 13/13, Part 2 9/9, Part 3 15/15, **total 37/37 Pass**.
 
 ## Next Steps
-- Optional: verify a Resend domain if Lucía (or any non-Yahoo inbox) must receive reset mail. Otherwise Sprint 3 is complete pending developer commit/PR.
-- Optional later: persistence beyond in-memory last incident analysis; Brasa Points persistence; inventory forecasting.
+- Click through retry / home / support on suppliers, incidents, profile, and login with the API down (not run in this session).
+- Optional: verify a Resend domain if Lucía (or any non-Yahoo inbox) must receive reset mail.
 
 ## Documentation
 - Updated `docs/ARCHITECTURE_PROPOSAL.md` into a CTO-facing FastAPI backend proposal.

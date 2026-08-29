@@ -7,12 +7,17 @@ from typing import Any, Dict, List, Optional
 
 from tinydb import Query, TinyDB
 
+from app.errors import PersistenceError
+
 AUTH_DB_PATH = Path(__file__).resolve().parents[2] / "data" / "auth.json"
 
 
 def get_auth_db() -> TinyDB:
-    AUTH_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    return TinyDB(AUTH_DB_PATH)
+    try:
+        AUTH_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+        return TinyDB(AUTH_DB_PATH)
+    except OSError as exc:
+        raise PersistenceError("Could not open the account directory.") from exc
 
 
 def _users():

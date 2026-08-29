@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { ErrorBanner } from "./ErrorBanner";
 import { useAuthApi } from "./useAuthApi";
 
 export function ChangePasswordForm() {
@@ -85,11 +86,7 @@ export function ChangePasswordForm() {
             onChange={(event) => setConfirm(event.target.value)}
           />
         </label>
-        {error ? (
-          <p className="ba-error" role="alert">
-            {error}
-          </p>
-        ) : null}
+        {error ? <ErrorBanner message={error} /> : null}
         <button type="submit" disabled={busy}>
           {busy ? "Updating…" : "Update password"}
         </button>

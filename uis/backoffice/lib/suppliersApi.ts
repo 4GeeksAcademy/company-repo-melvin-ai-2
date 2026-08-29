@@ -1,4 +1,4 @@
-import { authFetch } from "@repo/auth";
+import { authFetch, messageForHttpStatus, parseApiError } from "@repo/auth";
 
 export type Supplier = {
   id: number;
@@ -24,21 +24,19 @@ export type SupplierCreateInput = {
   notes?: string;
 };
 
+const REQUEST_FALLBACK =
+  "Could not complete that supplier request. Try again or contact hello@brasaland.com.";
+
 async function parseError(response: Response): Promise<string> {
   try {
-    const payload = (await response.json()) as {
-      detail?: string | Array<{ msg?: string }>;
-    };
-    if (typeof payload.detail === "string") return payload.detail;
-    if (Array.isArray(payload.detail)) {
-      return payload.detail
-        .map((item) => item.msg || JSON.stringify(item))
-        .join("; ");
-    }
+    const payload = (await response.json()) as unknown;
+    return parseApiError(
+      payload,
+      messageForHttpStatus(response.status, REQUEST_FALLBACK),
+    );
   } catch {
-    /* ignore */
+    return messageForHttpStatus(response.status, REQUEST_FALLBACK);
   }
-  return `Request failed (${response.status})`;
 }
 
 export async function listSuppliers(filters?: {

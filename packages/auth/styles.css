@@ -72,6 +72,47 @@
   margin: 0;
 }
 
+.ba-error-banner {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e4b4b0;
+  border-radius: 0.5rem;
+  background: #f8e9e7;
+}
+
+.ba-error-banner .ba-error {
+  color: #8a1f1f;
+  font-weight: 600;
+  margin: 0;
+}
+
+.ba-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 0;
+}
+
+.ba-retry {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid #8a1f1f;
+  border-radius: 0.35rem;
+  background: #fff;
+  color: #8a1f1f;
+  cursor: pointer;
+}
+
+.ba-retry:focus-visible {
+  outline: 2px solid #0b57d0;
+  outline-offset: 2px;
+}
+
 .ba-auth .ba-field-error {
   color: #8a1f1f;
   font-weight: 500;

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { ErrorBanner } from "./ErrorBanner";
 import { useAuthApi } from "./useAuthApi";
 
 type ForgotPasswordFormProps = {
@@ -56,11 +57,7 @@ export function ForgotPasswordForm({ heading }: ForgotPasswordFormProps) {
               onChange={(event) => setEmail(event.target.value)}
             />
           </label>
-          {error ? (
-            <p className="ba-error" role="alert">
-              {error}
-            </p>
-          ) : null}
+          {error ? <ErrorBanner message={error} /> : null}
           <button type="submit" disabled={busy}>
             {busy ? "Sending…" : "Send reset link"}
           </button>

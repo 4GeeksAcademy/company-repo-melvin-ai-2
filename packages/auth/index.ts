@@ -1,3 +1,4 @@
+export { ErrorBanner } from "./ErrorBanner";
 export { AuthRoot, AUTH_PUBLIC_PATHS } from "./AuthRoot";
 export { AuthGuard } from "./AuthGuard";
 export { LoginForm } from "./LoginForm";
@@ -7,7 +8,13 @@ export { ForgotPasswordForm } from "./ForgotPasswordForm";
 export { ResetPasswordForm } from "./ResetPasswordForm";
 export { ChangePasswordForm } from "./ChangePasswordForm";
 export { SessionNav } from "./SessionNav";
-export { authFetch, getBrasalandApiBase, AuthSessionError } from "./client";
+export {
+  authFetch,
+  getBrasalandApiBase,
+  AuthSessionError,
+  parseApiError,
+  messageForHttpStatus,
+} from "./client";
 export { getToken, setToken, clearToken, hasToken } from "./token";
 export { useAuthApi } from "./useAuthApi";
 export type { AuthMe, Profile, UserRole, TokenResponse, FieldErrors } from "./types";

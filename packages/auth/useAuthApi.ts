@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
-import { authFetch, fieldErrorsFromApi, getBrasalandApiBase, parseApiError } from "./client";
+import { authFetch, fieldErrorsFromApi, getBrasalandApiBase, parseApiError, brasalandFetch } from "./client";
 import { clearToken, setToken } from "./token";
 import type { AuthMe, FieldErrors, TokenResponse } from "./types";
 
@@ -10,7 +10,7 @@ export function useAuthApi() {
   const router = useRouter();
 
   const login = useCallback(async (email: string, password: string) => {
-    const response = await fetch(`${getBrasalandApiBase()}/auth/login`, {
+    const response = await brasalandFetch(`${getBrasalandApiBase()}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -31,7 +31,7 @@ export function useAuthApi() {
       phone?: string;
       address?: string;
     }): Promise<FieldErrors | void> => {
-      const response = await fetch(`${getBrasalandApiBase()}/users`, {
+      const response = await brasalandFetch(`${getBrasalandApiBase()}/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
@@ -78,7 +78,7 @@ export function useAuthApi() {
   }, [router]);
 
   const forgotPassword = useCallback(async (email: string) => {
-    const response = await fetch(`${getBrasalandApiBase()}/auth/forgot-password`, {
+    const response = await brasalandFetch(`${getBrasalandApiBase()}/auth/forgot-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -90,7 +90,7 @@ export function useAuthApi() {
   }, []);
 
   const resetPassword = useCallback(async (token: string, newPassword: string) => {
-    const response = await fetch(`${getBrasalandApiBase()}/auth/reset-password`, {
+    const response = await brasalandFetch(`${getBrasalandApiBase()}/auth/reset-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, new_password: newPassword }),

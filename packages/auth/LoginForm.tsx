@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ErrorBanner } from "./ErrorBanner";
 import { useAuthApi } from "./useAuthApi";
 
 type LoginFormProps = {
@@ -74,11 +75,7 @@ export function LoginForm({ heading, homePath = "/" }: LoginFormProps) {
             onChange={(event) => setPassword(event.target.value)}
           />
         </label>
-        {error ? (
-          <p className="ba-error" role="alert">
-            {error}
-          </p>
-        ) : null}
+        {error ? <ErrorBanner message={error} homeHref={homePath} /> : null}
         <button type="submit" disabled={busy}>
           {busy ? "Signing in…" : "Sign in"}
         </button>

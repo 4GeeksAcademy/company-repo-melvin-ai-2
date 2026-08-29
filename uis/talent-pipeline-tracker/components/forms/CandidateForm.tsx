@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { CandidateCreateInput } from "@/types/candidate";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { SuccessMessage } from "@/components/ui/SuccessMessage";
 
 export interface CandidateFormValues {
@@ -264,9 +265,7 @@ export function CandidateForm({
       {success && <SuccessMessage message={successMessage} />}
 
       {submitError && (
-        <p className="text-sm text-red-600" role="alert">
-          {submitError}
-        </p>
+        <ErrorMessage message={submitError} />
       )}
 
       <button

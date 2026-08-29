@@ -48,6 +48,8 @@ uv run uvicorn main:app --reload --port 8000
 
 Health: `GET http://localhost:8000/health` (public) · Docs: `http://localhost:8000/docs`
 
+Unhandled errors return JSON `{ "detail": "..." }` with `400`, `404`, `422`, or `500`. Response bodies never include stack traces, file paths, or secrets. Validation `422` includes field `loc` / `msg` only (no submitted `input` values).
+
 ## Auth endpoints
 
 | Method | Path | Auth |

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ErrorBanner } from "@repo/auth";
 import { AnalysisSummaryView } from "@/components/AnalysisSummaryView";
 import { FileDropzone } from "@/components/FileDropzone";
 import {
@@ -14,18 +15,24 @@ export function IncidentAnalyzer() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [lastFile, setLastFile] = useState<File | null>(null);
   const [downloading, setDownloading] = useState(false);
 
   async function handleFile(file: File) {
     setBusy(true);
     setError(null);
+    setLastFile(file);
     setFileName(file.name);
     try {
       const next = await analyzeIncidentsCsv(file);
       setSummary(next);
     } catch (err) {
       setSummary(null);
-      setError(err instanceof Error ? err.message : "Analysis failed.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not analyze that file. Try again or contact hello@brasaland.com.",
+      );
     } finally {
       setBusy(false);
     }
@@ -37,9 +44,10 @@ export function IncidentAnalyzer() {
       {fileName ? <p className="muted">Selected: {fileName}</p> : null}
       {busy ? <p role="status">Analyzing…</p> : null}
       {error ? (
-        <p className="error" role="alert">
-          {error}
-        </p>
+        <ErrorBanner
+          message={error}
+          onRetry={lastFile ? () => void handleFile(lastFile) : undefined}
+        />
       ) : null}
 
       {summary ? (
@@ -56,7 +64,9 @@ export function IncidentAnalyzer() {
                   await downloadResultsCsv();
                 } catch (err) {
                   setError(
-                    err instanceof Error ? err.message : "Download failed.",
+                    err instanceof Error
+                      ? err.message
+                      : "Could not download results. Try again.",
                   );
                 } finally {
                   setDownloading(false);

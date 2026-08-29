@@ -42,5 +42,16 @@ def seed_auth_if_empty() -> str:
 
 
 def seed_command() -> None:
-    status = seed_lucia_admin()
-    print(f"Auth seed: {status}")
+    import sys
+
+    from app.errors import PersistenceError
+
+    try:
+        status = seed_lucia_admin()
+        print(f"Auth seed: {status}")
+    except PersistenceError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise SystemExit(1) from exc
+    except OSError:
+        print("Error: could not write account data.", file=sys.stderr)
+        raise SystemExit(1)

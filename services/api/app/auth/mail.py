@@ -6,6 +6,7 @@ import logging
 from typing import Optional
 
 from app.auth import config
+from app.errors import MailSendError
 
 logger = logging.getLogger("brasaland.auth")
 
@@ -18,10 +19,7 @@ def send_reset_email(to_email: str, raw_token: str) -> Optional[str]:
     """Send the reset link. Returns a Resend id, or None if sending was skipped."""
     api_key = config.resend_api_key()
     if not api_key:
-        logger.warning(
-            "RESEND_API_KEY is not set; skipping password-reset email to %s",
-            to_email,
-        )
+        logger.warning("RESEND_API_KEY is not set; skipping password-reset email")
         return None
 
     link = reset_link(raw_token)
@@ -43,19 +41,23 @@ def send_reset_email(to_email: str, raw_token: str) -> Optional[str]:
     import resend
 
     resend.api_key = api_key
-    result = resend.Emails.send(
-        {
-            "from": config.resend_from_email(),
-            "to": [to_email],
-            "subject": "Reset your Brasaland password",
-            "text": text_body,
-            "html": html_body,
-        }
-    )
+    try:
+        result = resend.Emails.send(
+            {
+                "from": config.resend_from_email(),
+                "to": [to_email],
+                "subject": "Reset your Brasaland password",
+                "text": text_body,
+                "html": html_body,
+            }
+        )
+    except Exception as exc:
+        logger.exception("Resend failed for password reset")
+        raise MailSendError("Could not send the reset email.") from exc
     email_id = None
     if isinstance(result, dict):
         email_id = result.get("id")
     else:
         email_id = getattr(result, "id", None)
-    logger.info("Resend password-reset email id=%s to=%s", email_id, to_email)
+    logger.info("Resend password-reset email id=%s", email_id)
     return str(email_id) if email_id else "sent"

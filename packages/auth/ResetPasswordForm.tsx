@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ErrorBanner } from "./ErrorBanner";
 import { useAuthApi } from "./useAuthApi";
 
 type ResetPasswordFormProps = {
@@ -57,9 +58,7 @@ export function ResetPasswordForm({ heading }: ResetPasswordFormProps) {
     return (
       <section className="ba-auth">
         <h1>{heading}</h1>
-        <p className="ba-error" role="alert">
-          This reset link is missing a token.
-        </p>
+        <ErrorBanner message="This reset link is missing a token." />
         <p className="ba-links">
           <Link href="/forgot-password">Request a new reset link</Link>
         </p>
@@ -100,9 +99,7 @@ export function ResetPasswordForm({ heading }: ResetPasswordFormProps) {
         </label>
         {error ? (
           <>
-            <p className="ba-error" role="alert">
-              {error}
-            </p>
+            <ErrorBanner message={error} />
             <p className="ba-links">
               <Link href="/forgot-password">Request a new reset link</Link>
             </p>
