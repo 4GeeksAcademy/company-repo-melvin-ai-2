@@ -185,6 +185,9 @@ def seed_command() -> None:
     except OSError:
         print("Error: could not write supplier data.", file=sys.stderr)
         raise SystemExit(1)
+    except Exception:
+        print("Error: could not complete the supplier seed.", file=sys.stderr)
+        raise SystemExit(1)
 
 
 def main() -> None:

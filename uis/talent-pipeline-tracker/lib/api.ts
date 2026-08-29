@@ -13,6 +13,27 @@ const CONNECTION_ERROR =
   "Could not reach the candidate service. Check your connection and try again.";
 const REQUEST_FALLBACK =
   "Could not complete that request. Try again or contact hello@brasaland.com.";
+const TECHNICAL_ERROR =
+  /traceback|status code|unexpected token|internal server error|failed \(\d{3}\)/i;
+
+function sanitizeDetail(detail: unknown, fallback: string): string {
+  if (typeof detail === "string" && detail.trim()) {
+    return TECHNICAL_ERROR.test(detail) ? fallback : detail;
+  }
+  if (Array.isArray(detail)) {
+    const parts = detail
+      .map((item) => {
+        if (item && typeof item === "object" && "msg" in item) {
+          const msg = String((item as { msg: string }).msg);
+          return TECHNICAL_ERROR.test(msg) ? "" : msg;
+        }
+        return "";
+      })
+      .filter(Boolean);
+    return parts.length > 0 ? parts.join("; ") : fallback;
+  }
+  return fallback;
+}
 
 class ApiRequestError extends Error {
   status: number;
@@ -59,17 +80,11 @@ async function request<T>(
   }
 
   if (!response.ok) {
-    let message = messageForStatus(response.status);
+    const fallback = messageForStatus(response.status);
+    let message = fallback;
     try {
       const body = await response.json();
-      if (body.detail) {
-        message = Array.isArray(body.detail)
-          ? body.detail
-              .map((d: { msg?: string }) => d.msg)
-              .filter(Boolean)
-              .join(", ") || message
-          : String(body.detail);
-      }
+      message = sanitizeDetail(body?.detail, fallback);
     } catch {
       // keep status-mapped message
     }

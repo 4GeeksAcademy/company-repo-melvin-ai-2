@@ -88,10 +88,15 @@ def update_supplier(
 
 
 def delete_supplier(supplier_id: int) -> bool:
-    db = get_db()
-    table = db.table("suppliers")
-    removed = table.remove(doc_ids=[supplier_id])
-    return bool(removed)
+    try:
+        db = get_db()
+        table = db.table("suppliers")
+        removed = table.remove(doc_ids=[supplier_id])
+        return bool(removed)
+    except PersistenceError:
+        raise
+    except OSError as exc:
+        raise PersistenceError("Could not delete the supplier.") from exc
 
 
 def find_by_name(name: str) -> Optional[Dict[str, Any]]:

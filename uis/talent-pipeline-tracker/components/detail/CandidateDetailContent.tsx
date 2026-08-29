@@ -48,9 +48,9 @@ export function CandidateDetailContent({ id }: CandidateDetailContentProps) {
         getNotes(id),
       ]);
       setCandidate(record);
-      setNotes(notesResponse.data);
+      setNotes(notesResponse?.data ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load candidate");
+      setError(err instanceof Error ? err.message : "Could not load that candidate. Try again or contact hello@brasaland.com.");
     } finally {
       setLoading(false);
     }

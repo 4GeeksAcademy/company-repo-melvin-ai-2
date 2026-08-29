@@ -55,3 +55,6 @@ def seed_command() -> None:
     except OSError:
         print("Error: could not write account data.", file=sys.stderr)
         raise SystemExit(1)
+    except Exception:
+        print("Error: could not complete the account seed.", file=sys.stderr)
+        raise SystemExit(1)

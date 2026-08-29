@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { getRecords } from "@/lib/api";
 import { buildReturnTo } from "@/lib/url";
 import type {
-  Candidate,
   CandidateStage,
   CandidateStatus,
   PaginatedCandidates,
@@ -47,7 +46,7 @@ export function CandidateListContent() {
       });
       setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load candidates");
+      setError(err instanceof Error ? err.message : "Could not load candidates. Try again or contact hello@brasaland.com.");
       setData(null);
     } finally {
       setLoading(false);
@@ -79,10 +78,14 @@ export function CandidateListContent() {
       {!loading && !error && data && (
         <>
           <CandidateTable
-            candidates={data.data as Candidate[]}
+            candidates={data?.data ?? []}
             returnTo={returnTo}
           />
-          <Pagination total={data.total} page={data.page} limit={data.limit} />
+          <Pagination
+            total={data?.total ?? 0}
+            page={data?.page ?? 1}
+            limit={data?.limit ?? 20}
+          />
         </>
       )}
     </div>

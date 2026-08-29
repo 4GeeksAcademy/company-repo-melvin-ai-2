@@ -35,7 +35,9 @@ export function SupplierDirectory() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [country, setCountry] = useState("");
   const [category, setCategory] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionRetry, setActionRetry] = useState<(() => void) | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState<SupplierCreateInput>(emptyForm);
@@ -43,7 +45,9 @@ export function SupplierDirectory() {
 
   const loadList = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setLoadError(null);
+    setActionError(null);
+    setActionRetry(null);
     try {
       const rows = await listSuppliers({
         country: country || undefined,
@@ -54,7 +58,7 @@ export function SupplierDirectory() {
     } catch (err) {
       setSuppliers([]);
       setRateDrafts({});
-      setError(
+      setLoadError(
         err instanceof Error
           ? err.message
           : "Could not load suppliers. Try again or contact hello@brasaland.com.",
@@ -79,7 +83,8 @@ export function SupplierDirectory() {
   async function onCreate(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true);
-    setError(null);
+    setActionError(null);
+    setActionRetry(null);
     try {
       const payload: SupplierCreateInput = {
         ...form,
@@ -95,11 +100,17 @@ export function SupplierDirectory() {
       });
       await loadList();
     } catch (err) {
-      setError(
+      setActionError(
         err instanceof Error
           ? err.message
           : "Could not create that supplier. Try again.",
       );
+      setActionRetry(() => () => {
+        const formEl = document.querySelector(
+          ".supplier-form",
+        ) as HTMLFormElement | null;
+        formEl?.requestSubmit();
+      });
     } finally {
       setBusy(false);
     }
@@ -109,20 +120,23 @@ export function SupplierDirectory() {
     const raw = rateDrafts[id];
     const value = Number(raw);
     if (!Number.isFinite(value) || value <= 0) {
-      setError("Rate must be a number greater than 0");
+      setActionError("Rate must be a number greater than 0. Enter a valid rate and try again.");
+      setActionRetry(null);
       return;
     }
     setBusy(true);
-    setError(null);
+    setActionError(null);
+    setActionRetry(null);
     try {
       await updateSupplierRate(id, value);
       await loadList();
     } catch (err) {
-      setError(
+      setActionError(
         err instanceof Error
           ? err.message
           : "Could not update that rate. Try again.",
       );
+      setActionRetry(() => () => void onSaveRate(id));
     } finally {
       setBusy(false);
     }
@@ -131,22 +145,29 @@ export function SupplierDirectory() {
   async function onToggleStatus(row: Supplier) {
     const next = row.status === "active" ? "suspended" : "active";
     setBusy(true);
-    setError(null);
+    setActionError(null);
+    setActionRetry(null);
     try {
       await updateSupplierStatus(row.id, next);
       await loadList();
     } catch (err) {
-      setError(
+      setActionError(
         err instanceof Error
           ? err.message
           : "Could not update that status. Try again.",
       );
+      setActionRetry(() => () => void onToggleStatus(row));
     } finally {
       setBusy(false);
     }
   }
 
-  const showTable = !loading && !error;
+  const banner = loadError
+    ? { message: loadError, onRetry: () => void loadList().catch(() => undefined) }
+    : actionError
+      ? { message: actionError, onRetry: actionRetry ?? undefined }
+      : null;
+  const showTable = !loading && !loadError;
   const emptyList = showTable && suppliers.length === 0;
 
   return (
@@ -162,8 +183,8 @@ export function SupplierDirectory() {
         </div>
       </div>
 
-      {error ? (
-        <ErrorBanner message={error} onRetry={() => void loadList().catch(() => undefined)} />
+      {banner ? (
+        <ErrorBanner message={banner.message} onRetry={banner.onRetry} />
       ) : null}
 
       <section className="supplier-panel" aria-labelledby="filters-heading">
