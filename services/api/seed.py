@@ -169,11 +169,25 @@ def run_seed() -> int:
 
 
 def seed_command() -> None:
-    before = count_suppliers()
-    inserted = run_seed()
-    after = count_suppliers()
-    print(f"Seed complete: inserted {inserted} supplier(s).")
-    print(f"TinyDB now has {after} supplier(s) (was {before} before this run).")
+    import sys
+
+    from app.errors import PersistenceError
+
+    try:
+        before = count_suppliers()
+        inserted = run_seed()
+        after = count_suppliers()
+        print(f"Seed complete: inserted {inserted} supplier(s).")
+        print(f"TinyDB now has {after} supplier(s) (was {before} before this run).")
+    except PersistenceError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise SystemExit(1) from exc
+    except OSError:
+        print("Error: could not write supplier data.", file=sys.stderr)
+        raise SystemExit(1)
+    except Exception:
+        print("Error: could not complete the supplier seed.", file=sys.stderr)
+        raise SystemExit(1)
 
 
 def main() -> None:

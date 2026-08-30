@@ -5,8 +5,10 @@ from __future__ import annotations
 import logging
 
 from datetime import datetime, timezone
+from json import JSONDecodeError
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import ValidationError
 
 from app.auth.deps import get_current_user
 from app.auth.mail import send_reset_email
@@ -14,6 +16,7 @@ from app.auth.passwords import hash_password, verify_password
 from app.auth.reset import ResetTokenError, consume_reset_token, create_reset_token
 from app.auth.store import mark_unused_resets_used
 from app.auth.tokens import create_access_token
+from app.errors import MailSendError
 from app.users import service as users_service
 from app.users.schemas import (
     AuthMeResponse,
@@ -54,7 +57,20 @@ async def login(request: Request) -> TokenResponse:
     """JSON `{ email, password }` or OAuth2 form (`username` = email) for /docs Authorize."""
     content_type = (request.headers.get("content-type") or "").lower()
     if "application/json" in content_type:
-        payload = LoginRequest.model_validate(await request.json())
+        try:
+            body = await request.json()
+        except JSONDecodeError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Send a JSON body with email and password.",
+            ) from None
+        try:
+            payload = LoginRequest.model_validate(body)
+        except ValidationError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email and password are required.",
+            ) from None
         return _issue_token(payload.email, payload.password)
 
     form = await request.form()
@@ -80,8 +96,8 @@ def forgot_password(payload: ForgotPasswordRequest) -> MessageResponse:
         raw = create_reset_token(user["id"])
         try:
             send_reset_email(user["email"], raw)
-        except Exception:
-            logger.exception("Resend failed for password reset")
+        except MailSendError:
+            pass
     return MessageResponse()
 
 

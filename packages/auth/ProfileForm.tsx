@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import type { AuthMe } from "./types";
+import { ErrorBanner } from "./ErrorBanner";
 import { useAuthApi } from "./useAuthApi";
 
 export function ProfileForm() {
@@ -13,25 +14,29 @@ export function ProfileForm() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await loadMe();
+      setMe(data);
+      setName(data.profile?.name ?? "");
+      setPhone(data.profile?.phone ?? "");
+      setAddress(data.profile?.address ?? "");
+    } catch (err) {
+      setMe(null);
+      setError(err instanceof Error ? err.message : "Could not load profile.");
+    } finally {
+      setLoading(false);
+    }
+  }, [loadMe]);
 
   useEffect(() => {
-    let active = true;
-    loadMe()
-      .then((data) => {
-        if (!active) return;
-        setMe(data);
-        setName(data.profile.name ?? "");
-        setPhone(data.profile.phone ?? "");
-        setAddress(data.profile.address ?? "");
-      })
-      .catch((err: unknown) => {
-        if (!active) return;
-        setError(err instanceof Error ? err.message : "Could not load profile.");
-      });
-    return () => {
-      active = false;
-    };
-  }, [loadMe]);
+    void refresh();
+  }, [refresh]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -40,15 +45,36 @@ export function ProfileForm() {
     setNotice(null);
     try {
       const profile = await saveProfile({ name, phone, address });
-      setName(profile.name ?? "");
-      setPhone(profile.phone ?? "");
-      setAddress(profile.address ?? "");
+      setName(profile?.name ?? "");
+      setPhone(profile?.phone ?? "");
+      setAddress(profile?.address ?? "");
       setNotice("Profile saved.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save profile.");
     } finally {
       setBusy(false);
     }
+  }
+
+  if (loading) {
+    return (
+      <section className="ba-auth">
+        <h1>Account profile</h1>
+        <p role="status">Loading your Brasaland profile…</p>
+      </section>
+    );
+  }
+
+  if (!me) {
+    return (
+      <section className="ba-auth">
+        <h1>Account profile</h1>
+        <ErrorBanner
+          message={error ?? "Could not load profile."}
+          onRetry={() => void refresh()}
+        />
+      </section>
+    );
   }
 
   return (
@@ -58,12 +84,10 @@ export function ProfileForm() {
         Email and role come from your Brasaland user. Name and contact live on
         your profile.
       </p>
-      {me ? (
-        <p>
-          Signed in as <strong>{me.email}</strong> ({me.role})
-        </p>
-      ) : null}
-      <form onSubmit={onSubmit}>
+      <p>
+        Signed in as <strong>{me.email}</strong> ({me.role})
+      </p>
+      <form ref={formRef} onSubmit={onSubmit}>
         <label htmlFor="ba-prof-name">
           Name
           <input
@@ -98,9 +122,10 @@ export function ProfileForm() {
           />
         </label>
         {error ? (
-          <p className="ba-error" role="alert">
-            {error}
-          </p>
+          <ErrorBanner
+            message={error}
+            onRetry={() => formRef.current?.requestSubmit()}
+          />
         ) : null}
         {notice ? <p role="status">{notice}</p> : null}
         <button type="submit" disabled={busy}>

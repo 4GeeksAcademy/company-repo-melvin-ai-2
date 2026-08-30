@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
+import { ErrorBanner } from "./ErrorBanner";
 import { useAuthApi } from "./useAuthApi";
 
 export function ChangePasswordForm() {
@@ -11,6 +12,7 @@ export function ChangePasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,7 +48,7 @@ export function ChangePasswordForm() {
           {notice}
         </p>
       ) : null}
-      <form onSubmit={onSubmit}>
+      <form ref={formRef} onSubmit={onSubmit}>
         <label htmlFor="ba-change-current">
           Current password
           <input
@@ -86,9 +88,10 @@ export function ChangePasswordForm() {
           />
         </label>
         {error ? (
-          <p className="ba-error" role="alert">
-            {error}
-          </p>
+          <ErrorBanner
+            message={error}
+            onRetry={() => formRef.current?.requestSubmit()}
+          />
         ) : null}
         <button type="submit" disabled={busy}>
           {busy ? "Updating…" : "Update password"}

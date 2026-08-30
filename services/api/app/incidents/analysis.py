@@ -176,12 +176,20 @@ def _reader_from_text(text: str) -> csv.DictReader:
 
 
 def analyze_text(text: str, source_name: str) -> AnalysisResult:
-    reader = _reader_from_text(text)
-    return analyze_rows(reader, source_name=source_name)
+    try:
+        reader = _reader_from_text(text)
+        return analyze_rows(reader, source_name=source_name)
+    except csv.Error as exc:
+        raise IncidentAnalysisError("The CSV file could not be parsed.") from exc
 
 
 def analyze_path(csv_path: Path) -> AnalysisResult:
-    text = csv_path.read_text(encoding="utf-8")
+    try:
+        text = csv_path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        raise IncidentAnalysisError("CSV must be UTF-8 encoded.") from exc
+    except OSError as exc:
+        raise IncidentAnalysisError(f"Could not read {csv_path.name}.") from exc
     return analyze_text(text, source_name=csv_path.name)
 
 

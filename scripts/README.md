@@ -31,7 +31,7 @@ uis/
 python3 scripts/analyze.py scripts/incidents-brasaland.csv
 ```
 
-Expected against the 100-row sample: 100 total · 96 valid · 4 invalid · satisfaction average **3.46**.
+Missing files, unreadable CSV, and export write failures print to stderr and exit with code `1`.
 
 Optional console prompt exports `results.csv` in the current working directory (`metric`, `value`, `percentage`).
 

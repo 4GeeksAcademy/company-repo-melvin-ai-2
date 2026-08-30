@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ErrorBanner } from "./ErrorBanner";
 import { useAuthApi } from "./useAuthApi";
 
 type LoginFormProps = {
@@ -18,6 +19,7 @@ export function LoginForm({ heading, homePath = "/" }: LoginFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -49,7 +51,7 @@ export function LoginForm({ heading, homePath = "/" }: LoginFormProps) {
           {notice}
         </p>
       ) : null}
-      <form onSubmit={onSubmit}>
+      <form ref={formRef} onSubmit={onSubmit}>
         <label htmlFor="ba-login-email">
           Email
           <input
@@ -75,9 +77,11 @@ export function LoginForm({ heading, homePath = "/" }: LoginFormProps) {
           />
         </label>
         {error ? (
-          <p className="ba-error" role="alert">
-            {error}
-          </p>
+          <ErrorBanner
+            message={error}
+            homeHref={homePath}
+            onRetry={() => formRef.current?.requestSubmit()}
+          />
         ) : null}
         <button type="submit" disabled={busy}>
           {busy ? "Signing in…" : "Sign in"}

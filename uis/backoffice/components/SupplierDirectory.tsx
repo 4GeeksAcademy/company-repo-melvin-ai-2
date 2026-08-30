@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { ErrorBanner } from "@repo/auth";
 import {
   VALID_CATEGORIES,
   createSupplier,
@@ -34,48 +35,56 @@ export function SupplierDirectory() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [country, setCountry] = useState("");
   const [category, setCategory] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionRetry, setActionRetry] = useState<(() => void) | null>(null);
+  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState<SupplierCreateInput>(emptyForm);
   const [rateDrafts, setRateDrafts] = useState<Record<number, string>>({});
 
+  const loadList = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    setActionError(null);
+    setActionRetry(null);
+    try {
+      const rows = await listSuppliers({
+        country: country || undefined,
+        category: category || undefined,
+      });
+      setSuppliers(rows);
+      setRateDrafts(draftsFromRows(rows));
+    } catch (err) {
+      setSuppliers([]);
+      setRateDrafts({});
+      setLoadError(
+        err instanceof Error
+          ? err.message
+          : "Could not load suppliers. Try again or contact hello@brasaland.com.",
+      );
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [country, category]);
+
   useEffect(() => {
     let cancelled = false;
-
-    (async () => {
-      try {
-        const rows = await listSuppliers({
-          country: country || undefined,
-          category: category || undefined,
-        });
-        if (cancelled) return;
-        setSuppliers(rows);
-        setRateDrafts(draftsFromRows(rows));
-        setError(null);
-      } catch (err) {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Failed to load suppliers");
-      }
-    })();
-
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client fetch on filter change
+    void loadList().catch(() => {
+      if (cancelled) return;
+    });
     return () => {
       cancelled = true;
     };
-  }, [country, category]);
-
-  async function reload() {
-    const rows = await listSuppliers({
-      country: country || undefined,
-      category: category || undefined,
-    });
-    setSuppliers(rows);
-    setRateDrafts(draftsFromRows(rows));
-  }
+  }, [loadList]);
 
   async function onCreate(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true);
-    setError(null);
+    setActionError(null);
+    setActionRetry(null);
     try {
       const payload: SupplierCreateInput = {
         ...form,
@@ -89,9 +98,19 @@ export function SupplierDirectory() {
         country: form.country,
         currency: form.country === "Colombia" ? "COP" : "USD",
       });
-      await reload();
+      await loadList();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Create failed");
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : "Could not create that supplier. Try again.",
+      );
+      setActionRetry(() => () => {
+        const formEl = document.querySelector(
+          ".supplier-form",
+        ) as HTMLFormElement | null;
+        formEl?.requestSubmit();
+      });
     } finally {
       setBusy(false);
     }
@@ -101,16 +120,23 @@ export function SupplierDirectory() {
     const raw = rateDrafts[id];
     const value = Number(raw);
     if (!Number.isFinite(value) || value <= 0) {
-      setError("Rate must be a number greater than 0");
+      setActionError("Rate must be a number greater than 0. Enter a valid rate and try again.");
+      setActionRetry(null);
       return;
     }
     setBusy(true);
-    setError(null);
+    setActionError(null);
+    setActionRetry(null);
     try {
       await updateSupplierRate(id, value);
-      await reload();
+      await loadList();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Rate update failed");
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : "Could not update that rate. Try again.",
+      );
+      setActionRetry(() => () => void onSaveRate(id));
     } finally {
       setBusy(false);
     }
@@ -119,16 +145,30 @@ export function SupplierDirectory() {
   async function onToggleStatus(row: Supplier) {
     const next = row.status === "active" ? "suspended" : "active";
     setBusy(true);
-    setError(null);
+    setActionError(null);
+    setActionRetry(null);
     try {
       await updateSupplierStatus(row.id, next);
-      await reload();
+      await loadList();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Status update failed");
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : "Could not update that status. Try again.",
+      );
+      setActionRetry(() => () => void onToggleStatus(row));
     } finally {
       setBusy(false);
     }
   }
+
+  const banner = loadError
+    ? { message: loadError, onRetry: () => void loadList().catch(() => undefined) }
+    : actionError
+      ? { message: actionError, onRetry: actionRetry ?? undefined }
+      : null;
+  const showTable = !loading && !loadError;
+  const emptyList = showTable && suppliers.length === 0;
 
   return (
     <div className="supplier-page">
@@ -143,10 +183,8 @@ export function SupplierDirectory() {
         </div>
       </div>
 
-      {error ? (
-        <p className="supplier-error" role="alert">
-          {error}
-        </p>
+      {banner ? (
+        <ErrorBanner message={banner.message} onRetry={banner.onRetry} />
       ) : null}
 
       <section className="supplier-panel" aria-labelledby="filters-heading">
@@ -177,80 +215,89 @@ export function SupplierDirectory() {
               ))}
             </select>
           </label>
-          {busy ? <span className="muted">Updating…</span> : null}
+          {loading ? <span className="muted" role="status">Loading…</span> : null}
+          {busy && !loading ? <span className="muted">Updating…</span> : null}
         </div>
       </section>
 
       <section className="supplier-panel" aria-labelledby="list-heading">
-        <h2 id="list-heading">Suppliers ({suppliers.length})</h2>
-        <div className="supplier-table-wrap">
-          <table className="supplier-table">
-            <thead>
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Country</th>
-                <th scope="col">Categories</th>
-                <th scope="col">Rate</th>
-                <th scope="col">Contact email</th>
-                <th scope="col">Notes</th>
-                <th scope="col">Status</th>
-                <th scope="col">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {suppliers.map((row) => (
-                <tr key={row.id}>
-                  <td>
-                    <strong>{row.name}</strong>
-                    {row.updated_at ? (
-                      <div className="muted tiny">
-                        Rate updated {new Date(row.updated_at).toLocaleString()}
-                      </div>
-                    ) : null}
-                  </td>
-                  <td>{row.country}</td>
-                  <td>{row.categories.join(", ")}</td>
-                  <td>
-                    <div className="rate-edit">
-                      <input
-                        type="number"
-                        step="any"
-                        min="0.01"
-                        value={rateDrafts[row.id] ?? ""}
-                        aria-label={`Rate for ${row.name}`}
-                        onChange={(event) =>
-                          setRateDrafts((prev) => ({
-                            ...prev,
-                            [row.id]: event.target.value,
-                          }))
-                        }
-                      />
-                      <span>{row.currency}</span>
-                      <button
-                        type="button"
-                        onClick={() => void onSaveRate(row.id)}
-                      >
-                        Save
-                      </button>
-                    </div>
-                  </td>
-                  <td>{row.contact_email || "—"}</td>
-                  <td className="notes-cell">{row.notes || "—"}</td>
-                  <td>
-                    <span className={`status-badge status-badge--${row.status}`}>
-                      {row.status}
-                    </span>
-                  </td>
-                  <td>
-                    <button type="button" onClick={() => void onToggleStatus(row)}>
-                      {row.status === "active" ? "Suspend" : "Activate"}
-                    </button>
-                  </td>
+        <h2 id="list-heading">
+          Suppliers {showTable ? `(${suppliers.length})` : ""}
+        </h2>
+        {loading ? (
+          <p role="status">Loading suppliers…</p>
+        ) : emptyList ? (
+          <p>No suppliers match these filters.</p>
+        ) : showTable ? (
+          <div className="supplier-table-wrap">
+            <table className="supplier-table">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Country</th>
+                  <th scope="col">Categories</th>
+                  <th scope="col">Rate</th>
+                  <th scope="col">Contact email</th>
+                  <th scope="col">Notes</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {suppliers.map((row) => (
+                  <tr key={row.id}>
+                    <td>
+                      <strong>{row.name}</strong>
+                      {row.updated_at ? (
+                        <div className="muted tiny">
+                          Rate updated {new Date(row.updated_at).toLocaleString()}
+                        </div>
+                      ) : null}
+                    </td>
+                    <td>{row.country}</td>
+                    <td>{row.categories?.join(", ") || "—"}</td>
+                    <td>
+                      <div className="rate-edit">
+                        <input
+                          type="number"
+                          step="any"
+                          min="0.01"
+                          value={rateDrafts[row.id] ?? ""}
+                          aria-label={`Rate for ${row.name}`}
+                          onChange={(event) =>
+                            setRateDrafts((prev) => ({
+                              ...prev,
+                              [row.id]: event.target.value,
+                            }))
+                          }
+                        />
+                        <span>{row.currency}</span>
+                        <button
+                          type="button"
+                          onClick={() => void onSaveRate(row.id)}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </td>
+                    <td>{row.contact_email || "—"}</td>
+                    <td className="notes-cell">{row.notes || "—"}</td>
+                    <td>
+                      <span className={`status-badge status-badge--${row.status}`}>
+                        {row.status}
+                      </span>
+                    </td>
+                    <td>
+                      <button type="button" onClick={() => void onToggleStatus(row)}>
+                        {row.status === "active" ? "Suspend" : "Activate"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
       </section>
 
       <section className="supplier-panel" aria-labelledby="register-heading">
@@ -354,7 +401,7 @@ export function SupplierDirectory() {
               }
             />
           </label>
-          <button type="submit" disabled={busy}>
+          <button type="submit" disabled={busy || loading}>
             Create supplier
           </button>
         </form>

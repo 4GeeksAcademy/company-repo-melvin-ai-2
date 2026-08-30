@@ -7,12 +7,26 @@ from typing import Any, Dict, List, Optional
 
 from tinydb import Query, TinyDB
 
+from app.errors import PersistenceError
+
 AUTH_DB_PATH = Path(__file__).resolve().parents[2] / "data" / "auth.json"
 
 
+def _run_write(operation, message: str = "Could not save account data."):
+    try:
+        return operation()
+    except PersistenceError:
+        raise
+    except OSError as exc:
+        raise PersistenceError(message) from exc
+
+
 def get_auth_db() -> TinyDB:
-    AUTH_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    return TinyDB(AUTH_DB_PATH)
+    try:
+        AUTH_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+        return TinyDB(AUTH_DB_PATH)
+    except OSError as exc:
+        raise PersistenceError("Could not open the account directory.") from exc
 
 
 def _users():
@@ -57,8 +71,12 @@ def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
 def insert_user(data: Dict[str, Any]) -> Dict[str, Any]:
     payload = dict(data)
     payload["email"] = str(payload["email"]).strip().lower()
-    doc_id = _users().insert(payload)
-    return _with_id(doc_id, payload)
+
+    def _op() -> Dict[str, Any]:
+        doc_id = _users().insert(payload)
+        return _with_id(doc_id, payload)
+
+    return _run_write(_op)
 
 
 def update_user(user_id: int, patch: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -69,13 +87,20 @@ def update_user(user_id: int, patch: Dict[str, Any]) -> Optional[Dict[str, Any]]
     merged.update(patch)
     if "email" in merged:
         merged["email"] = str(merged["email"]).strip().lower()
-    _users().update(merged, doc_ids=[user_id])
-    return _with_id(user_id, merged)
+
+    def _op() -> Dict[str, Any]:
+        _users().update(merged, doc_ids=[user_id])
+        return _with_id(user_id, merged)
+
+    return _run_write(_op)
 
 
 def delete_user(user_id: int) -> bool:
-    removed = _users().remove(doc_ids=[user_id])
-    return bool(removed)
+    def _op() -> bool:
+        removed = _users().remove(doc_ids=[user_id])
+        return bool(removed)
+
+    return _run_write(_op)
 
 
 def get_profile_by_user_id(user_id: int) -> Optional[Dict[str, Any]]:
@@ -88,8 +113,12 @@ def get_profile_by_user_id(user_id: int) -> Optional[Dict[str, Any]]:
 
 def insert_profile(data: Dict[str, Any]) -> Dict[str, Any]:
     payload = dict(data)
-    doc_id = _profiles().insert(payload)
-    return _with_id(doc_id, payload)
+
+    def _op() -> Dict[str, Any]:
+        doc_id = _profiles().insert(payload)
+        return _with_id(doc_id, payload)
+
+    return _run_write(_op)
 
 
 def update_profile_by_user_id(
@@ -102,13 +131,21 @@ def update_profile_by_user_id(
     merged = dict(_profiles().get(doc_id=profile_id) or {})
     merged.update(patch)
     merged["user_id"] = user_id
-    _profiles().update(merged, doc_ids=[profile_id])
-    return _with_id(profile_id, merged)
+
+    def _op() -> Dict[str, Any]:
+        _profiles().update(merged, doc_ids=[profile_id])
+        return _with_id(profile_id, merged)
+
+    return _run_write(_op)
 
 
 def delete_profile_by_user_id(user_id: int) -> None:
     Profile = Query()
-    _profiles().remove(Profile.user_id == user_id)
+
+    def _op() -> None:
+        _profiles().remove(Profile.user_id == user_id)
+
+    _run_write(_op)
 
 
 def _resets():
@@ -117,8 +154,12 @@ def _resets():
 
 def insert_password_reset(data: Dict[str, Any]) -> Dict[str, Any]:
     payload = dict(data)
-    doc_id = _resets().insert(payload)
-    return _with_id(doc_id, payload)
+
+    def _op() -> Dict[str, Any]:
+        doc_id = _resets().insert(payload)
+        return _with_id(doc_id, payload)
+
+    return _run_write(_op)
 
 
 def get_password_reset_by_hash(token_hash: str) -> Optional[Dict[str, Any]]:
@@ -135,19 +176,31 @@ def update_password_reset(reset_id: int, patch: Dict[str, Any]) -> Optional[Dict
         return None
     merged = dict(existing)
     merged.update(patch)
-    _resets().update(merged, doc_ids=[reset_id])
-    return _with_id(reset_id, merged)
+
+    def _op() -> Dict[str, Any]:
+        _resets().update(merged, doc_ids=[reset_id])
+        return _with_id(reset_id, merged)
+
+    return _run_write(_op)
 
 
 def mark_unused_resets_used(user_id: int, used_at: str) -> None:
     Reset = Query()
     rows = _resets().search((Reset.user_id == user_id) & (Reset.used_at == None))  # noqa: E711
-    for doc in rows:
-        merged = dict(doc)
-        merged["used_at"] = used_at
-        _resets().update(merged, doc_ids=[doc.doc_id])
+
+    def _op() -> None:
+        for doc in rows:
+            merged = dict(doc)
+            merged["used_at"] = used_at
+            _resets().update(merged, doc_ids=[doc.doc_id])
+
+    _run_write(_op)
 
 
 def delete_resets_for_user(user_id: int) -> None:
     Reset = Query()
-    _resets().remove(Reset.user_id == user_id)
+
+    def _op() -> None:
+        _resets().remove(Reset.user_id == user_id)
+
+    _run_write(_op)

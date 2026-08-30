@@ -18,6 +18,7 @@ from app.incidents.analysis import (  # noqa: E402
     RULE_MISSING_REPORTER,
     RULE_SCORE_OUT_OF_RANGE,
     AnalysisResult,
+    IncidentAnalysisError,
     analyze_path,
     export_results_csv_text,
     _pct_label,
@@ -120,7 +121,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Error: file not found: {csv_path}", file=sys.stderr)
         return 1
 
-    result = analyze_path(csv_path)
+    try:
+        result = analyze_path(csv_path)
+    except IncidentAnalysisError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    except (OSError, UnicodeDecodeError):
+        print("Error: could not read the CSV file.", file=sys.stderr)
+        return 1
+
     print_report(result)
 
     try:
@@ -130,7 +139,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if answer == "y":
         output_path = Path("results.csv")
-        output_path.write_text(export_results_csv_text(result), encoding="utf-8")
+        try:
+            output_path.write_text(export_results_csv_text(result), encoding="utf-8")
+        except OSError:
+            print("Error: could not write results.csv.", file=sys.stderr)
+            return 1
         print(f"Saved {output_path.resolve()}")
 
     return 0

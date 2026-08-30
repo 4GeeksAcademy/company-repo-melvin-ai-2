@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
+import { ErrorBanner } from "./ErrorBanner";
 import { useAuthApi } from "./useAuthApi";
 
 type ForgotPasswordFormProps = {
@@ -14,6 +15,7 @@ export function ForgotPasswordForm({ heading }: ForgotPasswordFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,7 +45,7 @@ export function ForgotPasswordForm({ heading }: ForgotPasswordFormProps) {
           If that address is registered, you’ll receive a link shortly.
         </p>
       ) : (
-        <form onSubmit={onSubmit}>
+        <form ref={formRef} onSubmit={onSubmit}>
           <label htmlFor="ba-forgot-email">
             Email
             <input
@@ -57,9 +59,10 @@ export function ForgotPasswordForm({ heading }: ForgotPasswordFormProps) {
             />
           </label>
           {error ? (
-            <p className="ba-error" role="alert">
-              {error}
-            </p>
+            <ErrorBanner
+              message={error}
+              onRetry={() => formRef.current?.requestSubmit()}
+            />
           ) : null}
           <button type="submit" disabled={busy}>
             {busy ? "Sending…" : "Send reset link"}

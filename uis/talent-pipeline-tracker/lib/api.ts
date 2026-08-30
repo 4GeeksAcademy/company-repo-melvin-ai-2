@@ -9,6 +9,31 @@ import type {
 } from "@/types/candidate";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+const CONNECTION_ERROR =
+  "Could not reach the candidate service. Check your connection and try again.";
+const REQUEST_FALLBACK =
+  "Could not complete that request. Try again or contact hello@brasaland.com.";
+const TECHNICAL_ERROR =
+  /traceback|status code|unexpected token|internal server error|failed \(\d{3}\)/i;
+
+function sanitizeDetail(detail: unknown, fallback: string): string {
+  if (typeof detail === "string" && detail.trim()) {
+    return TECHNICAL_ERROR.test(detail) ? fallback : detail;
+  }
+  if (Array.isArray(detail)) {
+    const parts = detail
+      .map((item) => {
+        if (item && typeof item === "object" && "msg" in item) {
+          const msg = String((item as { msg: string }).msg);
+          return TECHNICAL_ERROR.test(msg) ? "" : msg;
+        }
+        return "";
+      })
+      .filter(Boolean);
+    return parts.length > 0 ? parts.join("; ") : fallback;
+  }
+  return fallback;
+}
 
 class ApiRequestError extends Error {
   status: number;
@@ -20,29 +45,48 @@ class ApiRequestError extends Error {
   }
 }
 
+function messageForStatus(status: number): string {
+  if (status === 401) return "Please sign in again.";
+  if (status === 403) return "You do not have permission to do that.";
+  if (status === 404) return "We could not find that candidate.";
+  if (status >= 500) {
+    return "The candidate service had a problem. Try again or contact hello@brasaland.com.";
+  }
+  return REQUEST_FALLBACK;
+}
+
 async function request<T>(
   path: string,
   options?: RequestInit,
 ): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-    ...options,
-  });
+  if (!API_URL) {
+    throw new ApiRequestError(
+      "The candidate service is not configured. Contact hello@brasaland.com.",
+      0,
+    );
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+      },
+      ...options,
+    });
+  } catch {
+    throw new ApiRequestError(CONNECTION_ERROR, 0);
+  }
 
   if (!response.ok) {
-    let message = `Request failed (${response.status})`;
+    const fallback = messageForStatus(response.status);
+    let message = fallback;
     try {
       const body = await response.json();
-      if (body.detail) {
-        message = Array.isArray(body.detail)
-          ? body.detail.map((d: { msg: string }) => d.msg).join(", ")
-          : String(body.detail);
-      }
+      message = sanitizeDetail(body?.detail, fallback);
     } catch {
-      // use default message
+      // keep status-mapped message
     }
     throw new ApiRequestError(message, response.status);
   }
@@ -51,7 +95,14 @@ async function request<T>(
     return undefined as T;
   }
 
-  return response.json() as Promise<T>;
+  try {
+    return (await response.json()) as T;
+  } catch {
+    throw new ApiRequestError(
+      "The candidate service returned an unexpected response.",
+      response.status,
+    );
+  }
 }
 
 function buildQuery(filters: RecordFilters): string {

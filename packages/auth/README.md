@@ -10,6 +10,7 @@ Shared Brasaland authentication for internal Next.js apps. Do not copy login/reg
 - `SessionNav` — profile, change-password, logout
 - `getToken` / `setToken` / `clearToken`
 - `authFetch` — Brasaland API calls with `Authorization: Bearer`
+- `ErrorBanner` — human-readable error with retry, home, and support contact
 
 ## Consume
 

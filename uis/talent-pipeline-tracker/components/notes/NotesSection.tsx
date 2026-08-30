@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Note } from "@/types/candidate";
 import { addNote, deleteNote } from "@/lib/api";
 import { formatDateTime } from "@/lib/labels";
@@ -19,12 +19,15 @@ export function NotesSection({ candidateId, initialNotes }: NotesSectionProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const retryAction = useRef<(() => void) | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = content.trim();
     if (!trimmed) return;
 
+    retryAction.current = () => formRef.current?.requestSubmit();
     setAdding(true);
     setError(null);
     setSuccess(null);
@@ -34,7 +37,11 @@ export function NotesSection({ candidateId, initialNotes }: NotesSectionProps) {
       setContent("");
       setSuccess("Note added.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add note");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not add that note. Try again or contact hello@brasaland.com.",
+      );
     } finally {
       setAdding(false);
     }
@@ -42,6 +49,7 @@ export function NotesSection({ candidateId, initialNotes }: NotesSectionProps) {
 
   const handleDelete = async (noteId: string) => {
     const previous = notes;
+    retryAction.current = () => void handleDelete(noteId);
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
     setDeletingId(noteId);
     setError(null);
@@ -51,7 +59,11 @@ export function NotesSection({ candidateId, initialNotes }: NotesSectionProps) {
       setSuccess("Note deleted.");
     } catch (err) {
       setNotes(previous);
-      setError(err instanceof Error ? err.message : "Failed to delete note");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not delete that note. Try again or contact hello@brasaland.com.",
+      );
     } finally {
       setDeletingId(null);
     }
@@ -61,7 +73,7 @@ export function NotesSection({ candidateId, initialNotes }: NotesSectionProps) {
     <div className="space-y-4">
       <h2 className="text-lg font-semibold text-stone-900">Internal Notes</h2>
 
-      <form onSubmit={handleAdd} className="space-y-2">
+      <form ref={formRef} onSubmit={handleAdd} className="space-y-2">
         <label htmlFor="note-content" className="block text-sm font-medium text-stone-700">
           Add a note
         </label>
@@ -83,7 +95,12 @@ export function NotesSection({ candidateId, initialNotes }: NotesSectionProps) {
       </form>
 
       {success && <SuccessMessage message={success} />}
-      {error && <ErrorMessage message={error} />}
+      {error && (
+        <ErrorMessage
+          message={error}
+          onRetry={() => retryAction.current?.()}
+        />
+      )}
 
       {notes.length === 0 ? (
         <p className="text-sm text-stone-500">No notes yet.</p>
