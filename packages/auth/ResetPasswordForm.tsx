@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ErrorBanner } from "./ErrorBanner";
 import { useAuthApi } from "./useAuthApi";
@@ -18,6 +18,7 @@ export function ResetPasswordForm({ heading }: ResetPasswordFormProps) {
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     const value = new URLSearchParams(window.location.search).get("token");
@@ -70,7 +71,7 @@ export function ResetPasswordForm({ heading }: ResetPasswordFormProps) {
     <section className="ba-auth">
       <h1>{heading}</h1>
       <p>Choose a new password for your Brasaland account.</p>
-      <form onSubmit={onSubmit}>
+      <form ref={formRef} onSubmit={onSubmit}>
         <label htmlFor="ba-reset-password">
           New password
           <input
@@ -99,7 +100,10 @@ export function ResetPasswordForm({ heading }: ResetPasswordFormProps) {
         </label>
         {error ? (
           <>
-            <ErrorBanner message={error} />
+            <ErrorBanner
+              message={error}
+              onRetry={() => formRef.current?.requestSubmit()}
+            />
             <p className="ba-links">
               <Link href="/forgot-password">Request a new reset link</Link>
             </p>

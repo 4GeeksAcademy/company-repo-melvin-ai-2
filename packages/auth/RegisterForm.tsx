@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { FieldErrors } from "./types";
 import { ErrorBanner } from "./ErrorBanner";
@@ -23,6 +23,7 @@ export function RegisterForm({ heading, homePath = "/" }: RegisterFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [fields, setFields] = useState<FieldErrors>({});
   const [busy, setBusy] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,7 +54,7 @@ export function RegisterForm({ heading, homePath = "/" }: RegisterFormProps) {
     <section className="ba-auth">
       <h1>{heading}</h1>
       <p>Create a Brasaland operator account.</p>
-      <form onSubmit={onSubmit}>
+      <form ref={formRef} onSubmit={onSubmit}>
         <label htmlFor="ba-reg-email">
           Email
           <input
@@ -118,7 +119,13 @@ export function RegisterForm({ heading, homePath = "/" }: RegisterFormProps) {
             onChange={(event) => setAddress(event.target.value)}
           />
         </label>
-        {error ? <ErrorBanner message={error} homeHref={homePath} /> : null}
+        {error ? (
+          <ErrorBanner
+            message={error}
+            homeHref={homePath}
+            onRetry={() => formRef.current?.requestSubmit()}
+          />
+        ) : null}
         <button type="submit" disabled={busy}>
           {busy ? "Creating account…" : "Register"}
         </button>

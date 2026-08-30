@@ -93,6 +93,7 @@ export function CandidateForm({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     return () => {
@@ -124,7 +125,11 @@ export function CandidateForm({
         onSuccess();
       }, SUCCESS_REDIRECT_MS);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Submission failed");
+      setSubmitError(
+        err instanceof Error
+          ? err.message
+          : "Could not save this candidate. Try again or contact hello@brasaland.com.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -140,7 +145,7 @@ export function CandidateForm({
     }`;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-5">
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor="full_name" className="mb-1 block text-sm font-medium text-stone-700">
@@ -265,7 +270,10 @@ export function CandidateForm({
       {success && <SuccessMessage message={successMessage} />}
 
       {submitError && (
-        <ErrorMessage message={submitError} />
+        <ErrorMessage
+          message={submitError}
+          onRetry={() => formRef.current?.requestSubmit()}
+        />
       )}
 
       <button

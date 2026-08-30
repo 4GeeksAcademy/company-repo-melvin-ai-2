@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import type { AuthMe } from "./types";
 import { ErrorBanner } from "./ErrorBanner";
 import { useAuthApi } from "./useAuthApi";
@@ -15,6 +15,7 @@ export function ProfileForm() {
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -86,7 +87,7 @@ export function ProfileForm() {
       <p>
         Signed in as <strong>{me.email}</strong> ({me.role})
       </p>
-      <form onSubmit={onSubmit}>
+      <form ref={formRef} onSubmit={onSubmit}>
         <label htmlFor="ba-prof-name">
           Name
           <input
@@ -120,7 +121,12 @@ export function ProfileForm() {
             onChange={(event) => setAddress(event.target.value)}
           />
         </label>
-        {error ? <ErrorBanner message={error} /> : null}
+        {error ? (
+          <ErrorBanner
+            message={error}
+            onRetry={() => formRef.current?.requestSubmit()}
+          />
+        ) : null}
         {notice ? <p role="status">{notice}</p> : null}
         <button type="submit" disabled={busy}>
           {busy ? "Saving…" : "Save profile"}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { CandidateStage, CandidateStatus } from "@/types/candidate";
 import { STATUS_OPTIONS, STAGE_OPTIONS } from "@/lib/labels";
 import { patchRecord } from "@/lib/api";
@@ -25,10 +25,12 @@ export function StatusStageControls({
   const [updating, setUpdating] = useState<"status" | "stage" | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const retryAction = useRef<(() => void) | null>(null);
 
   const handleStatusChange = async (newStatus: CandidateStatus) => {
     if (newStatus === status) return;
     const previous = status;
+    retryAction.current = () => void handleStatusChange(newStatus);
     onUpdate({ status: newStatus });
     setUpdating("status");
     setError(null);
@@ -38,7 +40,11 @@ export function StatusStageControls({
       setSuccess("Status updated successfully.");
     } catch (err) {
       onUpdate({ status: previous });
-      setError(err instanceof Error ? err.message : "Failed to update status");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not update this candidate's status. Try again or contact hello@brasaland.com.",
+      );
     } finally {
       setUpdating(null);
     }
@@ -47,6 +53,7 @@ export function StatusStageControls({
   const handleStageChange = async (newStage: CandidateStage) => {
     if (newStage === stage) return;
     const previous = stage;
+    retryAction.current = () => void handleStageChange(newStage);
     onUpdate({ stage: newStage });
     setUpdating("stage");
     setError(null);
@@ -56,7 +63,11 @@ export function StatusStageControls({
       setSuccess("Stage updated successfully.");
     } catch (err) {
       onUpdate({ stage: previous });
-      setError(err instanceof Error ? err.message : "Failed to update stage");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not update this candidate's stage. Try again or contact hello@brasaland.com.",
+      );
     } finally {
       setUpdating(null);
     }
@@ -111,7 +122,12 @@ export function StatusStageControls({
       </div>
 
       {success && <SuccessMessage message={success} />}
-      {error && <ErrorMessage message={error} />}
+      {error && (
+        <ErrorMessage
+          message={error}
+          onRetry={() => retryAction.current?.()}
+        />
+      )}
     </div>
   );
 }
