@@ -48,6 +48,19 @@ uv run uvicorn main:app --reload --port 8000
 
 Health: `GET http://localhost:8000/health` (public) · Docs: `http://localhost:8000/docs`
 
+## Tests
+
+Auth unit tests (AUTH-088) live in `tests/`. How to run, coverage, and the case list are in the repo-root [`TESTING.md`](../../TESTING.md).
+
+From the git root: `uv run pytest` and `uv run pytest --cov`. From this directory:
+
+```bash
+cd services/api
+uv sync --group dev
+uv run pytest
+uv run pytest --cov
+```
+
 Unhandled errors return JSON `{ "detail": "..." }` with `400`, `404`, `422`, or `500`. Response bodies never include stack traces, file paths, or secrets. Validation `422` includes field `loc` / `msg` only (no submitted `input` values).
 
 ## Auth endpoints
