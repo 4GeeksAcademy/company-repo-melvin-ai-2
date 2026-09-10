@@ -1,4 +1,8 @@
-"""TinyDB persistence for Brasaland suppliers."""
+"""Brasaland persistence: TinyDB suppliers plus SQLModel inventory re-exports.
+
+`get_db()` is the supplier TinyDB client. Do not reuse that name for Postgres.
+Inventory sessions come from `get_inventory_session` (one SQLModel Session per request).
+"""
 
 from __future__ import annotations
 
@@ -8,6 +12,11 @@ from typing import Any, Dict, List, Optional
 from tinydb import Query, TinyDB
 
 from app.errors import PersistenceError
+from app.inventory.db import (  # noqa: F401 — dual-connection re-exports for inventory
+    get_engine as get_inventory_engine,
+    get_inventory_session,
+    init_inventory_db,
+)
 
 DB_PATH = Path(__file__).resolve().parent / "data" / "suppliers.json"
 

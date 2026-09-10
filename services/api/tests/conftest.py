@@ -11,6 +11,7 @@ os.environ["SEED_ADMIN_PASSWORD"] = ""
 os.environ["RESEND_API_KEY"] = ""
 os.environ["RESET_TOKEN_EXPIRE_MINUTES"] = "30"
 os.environ["PUBLIC_APP_URL"] = "http://localhost:3101"
+os.environ["DATABASE_URL"] = ""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -32,6 +33,7 @@ def isolated_auth_db(tmp_path, monkeypatch):
     monkeypatch.setattr("database.DB_PATH", tmp_path / "suppliers.json")
     monkeypatch.setattr("main.count_suppliers", lambda: 1)
     monkeypatch.setattr("main.seed_auth_if_empty", lambda: "skipped")
+    monkeypatch.setattr("main.init_inventory_db", lambda: "skipped")
     yield tmp_path
 
 
