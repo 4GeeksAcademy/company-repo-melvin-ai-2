@@ -146,7 +146,7 @@ services/api/
 3. **Auth:** Bearer on every `/inventory` route, including GET products and GET orders.
 4. **Sessions:** `get_db()` stays TinyDB (suppliers). SQLModel uses `get_inventory_session` via `Depends()`. Engine may be cached; sessions are per request.
 5. **`user_uuid`:** `str(TinyDB user id)` from `get_current_user`. No User SQLModel table; do not add UUIDs to auth.
-6. **FKs:** `ingredient_id` uses `Field(foreign_key="ingredients.id")` only. Do not add SQLModel `Relationship()`.
+6. **FKs:** `ingredient_id` uses `Field(foreign_key="ingredients.id")` plus SQLModel `Relationship(back_populates=...)`. Do not use `from __future__ import annotations` in `models.py` (SQLAlchemy 2 would pass `list['IngredientEntry']` as the relationship target).
 7. **Demo grade:** Live `GET /inventory/products` against Supabase (not pytest SQLite) must show CONTEXT seed net stock. Over-stock outbound must return HTTP 400.
 
 ---

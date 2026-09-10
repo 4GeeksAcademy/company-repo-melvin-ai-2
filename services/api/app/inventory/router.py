@@ -109,7 +109,7 @@ def create_inbound(
     session.commit()
     session.refresh(entry)
     return InboundRead(
-        **entry.model_dump(),
+        **entry.model_dump(exclude={"ingredient"}),
         ingredient=IngredientPublic.model_validate(ingredient),
     )
 
@@ -139,7 +139,7 @@ def create_outbound(
     session.commit()
     session.refresh(exit_row)
     return OutboundRead(
-        **exit_row.model_dump(),
+        **exit_row.model_dump(exclude={"ingredient"}),
         ingredient=IngredientPublic.model_validate(ingredient),
     )
 

@@ -1,12 +1,10 @@
 """SQLModel tables for Brasaland ingredients in Supabase. No stock column."""
 
-from __future__ import annotations
-
 from datetime import datetime, timezone
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy import Column, DateTime, UniqueConstraint
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 
 
 def _utc_now() -> datetime:
@@ -24,6 +22,11 @@ class Ingredient(SQLModel, table=True):
     category: str
     country: str
 
+    # Do not use `from __future__ import annotations` here: SQLAlchemy 2 would
+    # treat Relationship() as targeting the string "list['IngredientEntry']".
+    entries: List["IngredientEntry"] = Relationship(back_populates="ingredient")
+    exits: List["IngredientExit"] = Relationship(back_populates="ingredient")
+
 
 class IngredientEntry(SQLModel, table=True):
     __tablename__ = "ingredient_entries"
@@ -39,6 +42,8 @@ class IngredientEntry(SQLModel, table=True):
     )
     user_uuid: str
 
+    ingredient: Optional[Ingredient] = Relationship(back_populates="entries")
+
 
 class IngredientExit(SQLModel, table=True):
     __tablename__ = "ingredient_exits"
@@ -53,3 +58,5 @@ class IngredientExit(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
     user_uuid: str
+
+    ingredient: Optional[Ingredient] = Relationship(back_populates="exits")
