@@ -19,8 +19,9 @@ from app.auth.seed import seed_auth_if_empty
 from app.errors import PersistenceError
 from app.profiles.router import router as profiles_router
 from app.routers.incidents import router as incidents_router
+from app.routers.inventory import router as inventory_router
 from app.users.router import router as users_router
-from database import count_suppliers
+from database import count_suppliers, init_inventory_db
 from routes.suppliers import router as suppliers_router
 from seed import run_seed
 
@@ -40,6 +41,15 @@ async def lifespan(_app: FastAPI):
             print(f"Startup seed: inserted {inserted} suppliers.")
         auth_status = seed_auth_if_empty()
         print(f"Startup auth seed: {auth_status}.")
+        try:
+            inventory_status = init_inventory_db()
+            print(f"Startup inventory: {inventory_status}.")
+        except Exception:
+            logger.exception("Inventory startup failed")
+            print(
+                "Startup inventory failed. Check DATABASE_URL and try again.",
+                file=sys.stderr,
+            )
     except PersistenceError:
         logger.exception("Startup seed failed")
         print(
@@ -52,8 +62,8 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(
     title="Brasaland API",
     description=(
-        "Internal Brasaland APIs: authentication, incidents analysis, "
-        "and supplier directory."
+        "Internal Brasaland APIs: authentication, ingredient inventory, "
+        "incidents analysis, and supplier directory."
     ),
     version="0.3.0",
     lifespan=lifespan,
@@ -77,6 +87,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(profiles_router)
+app.include_router(inventory_router)
 app.include_router(incidents_router)
 app.include_router(suppliers_router)
 

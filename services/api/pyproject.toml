@@ -14,6 +14,8 @@ dependencies = [
   "libpass[bcrypt]>=1.9.3",
   "python-dotenv>=1.2.1",
   "resend>=2.42.0",
+  "sqlmodel>=0.0.34",
+  "psycopg2-binary>=2.9.12",
 ]
 
 [project.scripts]

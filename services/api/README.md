@@ -80,7 +80,24 @@ Unhandled errors return JSON `{ "detail": "..." }` with `400`, `404`, `422`, or 
 | `POST` | `/auth/reset-password` | Public; `{ "token", "new_password" }`; one-time; `400` if invalid/expired/used |
 | `POST` | `/auth/change-password` | Bearer; `{ "current_password", "new_password" }`; `400` if current is wrong |
 
-`GET /suppliers*`, supplier mutations, `POST /api/incidents/analyze`, and `GET /api/incidents/results/export` require a Bearer token. `GET /health` stays public.
+`GET /suppliers*`, supplier mutations, `POST /api/incidents/analyze`, `GET /api/incidents/results/export`, and `/inventory*` require a Bearer token. `GET /health` stays public.
+
+## Inventory endpoints (Supabase)
+
+Ingredient stock is **computed** chain-wide (inbound − outbound per SKU, not per location). There is no writable stock column. Tables live in `app/inventory/`; `app/routers/inventory.py` registers them on this FastAPI app. `get_db()` remains TinyDB (suppliers); inventory uses `get_inventory_session`. All `/inventory` routes need a Bearer token, including GET. See [`memory-bank/inventory-orm.md`](../../memory-bank/inventory-orm.md). Set `DATABASE_URL` to the Supabase Transaction pooler URI. Startup creates tables and seeds six SKUs when the inventory database is empty.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/inventory/products` | List ingredients with `current_stock` and `country` |
+| `POST` | `/inventory/products` | Create an ingredient (no stock field) |
+| `GET` | `/inventory/products/{id}` | One ingredient with derived stock |
+| `POST` | `/inventory/orders/inbound` | Log a supplier delivery (`IngredientEntry`) |
+| `POST` | `/inventory/orders/outbound` | Log consumption or waste; `400` if stock would go negative |
+| `GET` | `/inventory/orders` | Entries and exits, newest first, with ingredient data |
+
+`user_uuid` on orders is `str(TinyDB user id)`. TinyDB auth is unchanged.
+
+Demo against Supabase: `uv run uvicorn main:app --reload --port 8000`, open `/docs`, Authorize as Lucía (`POST /auth/login`), then `GET /inventory/products`. Expect six CONTEXT SKUs, beef `current_stock` 60, pork 32. `POST /inventory/orders/outbound` above available stock must return HTTP 400 and must not change stock. Startup prints `Startup inventory: created` once; later starts print `exists`.
 
 Reset links use `PUBLIC_APP_URL` (default `http://localhost:3101`) as `{PUBLIC_APP_URL}/reset-password?token=...`. The same path exists on incident web (`:3102`) and talent tracker (`:3000`) if you change the origin.
 
