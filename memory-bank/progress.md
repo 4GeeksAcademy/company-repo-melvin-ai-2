@@ -1,9 +1,10 @@
 # Progress
 
 ## Current Milestone
-Brasaland ingredient inventory ORM on `milestone5p_1/feature-brasaland-orm`: SQLModel + Supabase under `/inventory`; TinyDB auth unchanged.
+Brasaland kitchen inventory UI on `milestone5p_1/feature-brasaland-inventory-ui`: four lesson routes in `uis/backoffice`, live `/inventory` API.
 
 ## Completed
+- Milestone 5 inventory UI: `/backoffice/inventory/products`, `/orders/inbound`, `/orders/outbound`, `/orders` in the existing backoffice (port 3101). Ingredient/supplier/location dropdowns (no raw IDs); stock badges empty / low (`< 10`) / healthy (`≥ 10`); `lib/inventory.ts` uses `authFetch`. CONTEXT: [`memory-bank/inventory-ui.md`](inventory-ui.md).
 - Milestone 5 inventory: `app/inventory/` SQLModel `Ingredient` / `IngredientEntry` / `IngredientExit` (no stored stock); registered from `app/routers/inventory.py`; TinyDB `get_db()` unchanged, SQLModel `get_inventory_session` re-exported from `database.py`; Bearer on all `/inventory` routes; chain-wide `current_stock`; `user_uuid` is `str(TinyDB id)`. CONTEXT: [`memory-bank/inventory-orm.md`](inventory-orm.md).
 - AUTH-088: root `TESTING.md` case list; `services/api/tests/` for register, login, JWT expiry, `/auth/me`, forgot/reset/change-password, users, profiles; Jest for token storage and error mapping. Isolated TinyDB; Resend mocked.
 - Tightened `AuthGuard` to call `GET /auth/me`: no token or 401 returns to `/login`; network or other failures show `ErrorBanner` with retry (plus home and `hello@brasaland.com`). `finally` clears the checking state.
@@ -25,6 +26,7 @@ Brasaland ingredient inventory ORM on `milestone5p_1/feature-brasaland-orm`: SQL
 - Sprint 3 AUTH-03: forgot/reset/change-password API + `@repo/auth` forms and thin routes; reset tokens hashed in TinyDB (expiry + one-time); Resend wired behind `RESEND_API_KEY`.
 
 ## Verification
+- Inventory UI (2026-09-10): `cd uis/backoffice && npm run lint` passed; `npx tsc --noEmit` passed; `npm run build` listed `/backoffice/inventory/products`, `/orders`, `/orders/inbound`, `/orders/outbound`. Live session on `:3101`: ingredients table (6 SKUs, empty/low/healthy badges), inbound name/supplier/kitchen dropdowns, outbound over-stock warning plus API `Insufficient stock` 400, orders history. `.env.local` uses `NEXT_PUBLIC_INVENTORY_API_URL=http://localhost:8000`.
 - Inventory ORM (2026-09-09): `cd services/api && uv run pytest` — 50 passed. Live Supabase (2026-09-10): six CONTEXT SKUs; beef 60.0 CO, pork 32.0 US; over-stock outbound HTTP 400. `Relationship(back_populates=...)` on Ingredient/Entry/Exit (no `from __future__ import annotations` in models.py).
 - AUTH-088 (2026-08-31): From the **git root**, `uv run pytest` — 44 passed; `uv run pytest --cov` — 44 passed, `app.auth` **83%** (gate 70%). `cd packages/auth && npm test` — 10 passed. `TESTING.md` records coverage, AI-assisted cases (expired JWT; unknown-email forgot-password), and the empty bugs list. Assertions check session/token/reset decisions; non-obvious asserts have brief comments.
 - AuthGuard + retry nits (2026-08-30): lint + `tsc --noEmit` + production build passed for `uis/backoffice`, `uis/web`, and `uis/talent-pipeline-tracker`. Browser with API down: stale token on `/suppliers` shows connection copy plus Try again / home / support; retry keeps the banner; forgot-password and register retries re-submit. With API up: Lucía session check loads 15 suppliers. Talent: after login, intercepted note POST and status PATCH show human connection copy plus Try again; retry re-fires the same call. Public `/brasa-points` still has no fetch three-state. Reset missing-token banner still has home/support only (nothing to retry).
@@ -46,6 +48,7 @@ Brasaland ingredient inventory ORM on `milestone5p_1/feature-brasaland-orm`: SQL
 - Optional: verify a Resend domain if Lucía (or any non-Yahoo inbox) must receive reset mail.
 
 ## Documentation
+- Milestone 5 inventory UI: [`memory-bank/inventory-ui.md`](inventory-ui.md). Backoffice routes in `uis/backoffice/README.md`.
 - Milestone 5 inventory CONTEXT: [`memory-bank/inventory-orm.md`](inventory-orm.md). Routes in `services/api/README.md`.
 - AUTH-088 runbook: [`TESTING.md`](../TESTING.md). Pointers in `services/api/README.md` and `packages/auth/README.md`.
 - Updated `docs/ARCHITECTURE_PROPOSAL.md` into a CTO-facing FastAPI backend proposal.

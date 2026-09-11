@@ -36,6 +36,17 @@ export function BackofficeShell({ children }: BackofficeShellProps) {
           >
             <span aria-hidden="true">▣</span> Suppliers
           </Link>
+          <Link
+            className={
+              pathname?.startsWith("/backoffice/inventory") ? "active" : undefined
+            }
+            href="/backoffice/inventory/products"
+            aria-current={
+              pathname?.startsWith("/backoffice/inventory") ? "page" : undefined
+            }
+          >
+            <span aria-hidden="true">▤</span> Inventory
+          </Link>
           <Link href="/#locations">
             <span aria-hidden="true">⌖</span> Locations
           </Link>
