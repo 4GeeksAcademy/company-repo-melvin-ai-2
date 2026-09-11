@@ -106,7 +106,11 @@ export function InboundDeliveryForm({
       });
       const name =
         ingredients.find((row) => row.id === selectedId)?.name ?? "ingredient";
+      setIngredientId("");
       setQuantity("");
+      setSupplierChoice(DELIVERY_SUPPLIERS[0]);
+      setOtherSupplier("");
+      setLocationId("1");
       setSuccess(`Logged a delivery of ${qty} for ${name}.`);
     } catch (err) {
       setActionError(
