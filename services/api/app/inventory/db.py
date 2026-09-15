@@ -13,7 +13,8 @@ from sqlmodel import Session, SQLModel, create_engine
 from app.inventory import models as _models  # noqa: F401 — register tables
 
 API_ROOT = Path(__file__).resolve().parents[2]
-load_dotenv(API_ROOT / ".env")
+if not Path("/.dockerenv").exists():
+    load_dotenv(API_ROOT / ".env")
 
 _engine = None
 

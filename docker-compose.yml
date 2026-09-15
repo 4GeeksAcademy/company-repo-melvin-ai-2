@@ -1,0 +1,63 @@
+# Brasaland local development. Secrets come from root .env only.
+# Inside this network the API host is the service name `backend`, not localhost.
+
+networks:
+  brasaland:
+    name: brasaland-dev
+
+volumes:
+  ui_website_node_modules:
+  ui_backoffice_node_modules:
+  ui_website_next:
+  ui_backoffice_next:
+
+services:
+  backend:
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./services/api:/app
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      brasaland:
+
+  ui:
+    build:
+      context: .
+      dockerfile: uis/Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./uis/website:/workspace/uis/website
+      - ./uis/backoffice:/workspace/uis/backoffice
+      - ./packages/auth:/workspace/packages/auth
+      - ./src:/workspace/src
+      - ./uis/start.sh:/workspace/uis/start.sh
+      - ui_website_node_modules:/workspace/uis/website/node_modules
+      - ui_backoffice_node_modules:/workspace/uis/backoffice/node_modules
+      - ui_website_next:/workspace/uis/website/.next
+      - ui_backoffice_next:/workspace/uis/backoffice/.next
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      brasaland:

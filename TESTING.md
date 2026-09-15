@@ -34,7 +34,7 @@ Recorded **2026-08-31** from the git root (`uv run pytest --cov`):
 | --- | --- |
 | `uv run pytest` | **44 passed** |
 | `uv run pytest --cov` | **44 passed**, `app.auth` coverage **83%** (gate 70%) |
-| `cd packages/auth && npx jest --coverage` | **10 passed** |
+| `cd packages/auth && npx jest --coverage` | **11 passed** |
 
 Line coverage on `app.auth` is 83%, not 100%. Untouched lines are Resend send internals, seed CLI `main`, and TinyDB disk-error paths. Those are not auth *decisions*; the cases above cover login, expiry, reset consume-once, and privilege checks.
 
@@ -175,7 +175,7 @@ Token generation, JWT validation, and password hashing are Python. Jest covers c
 | `parseApiError` | Human `detail` string is used. | Traceback-like `detail` is replaced with the fallback. |
 | `messageForHttpStatus` | 401 / 403 / 404 map to sign-in, permission, and not-found copy. | Unknown 4xx keeps the fallback. |
 | `fieldErrorsFromApi` | `loc`/`msg` list maps to field names. | Non-array or empty payload → no fields. |
-| `getBrasalandApiBase` | Env base URL without a trailing slash. | Unset env → `http://localhost:8000`. |
+| `getBrasalandApiBase` | Env base URL without a trailing slash. Server prefers `INTERNAL_API_URL`. | Unset env → `http://localhost:8000`. `INTERNAL_API_URL=http://backend:8000/` → `http://backend:8000`. |
 
 ## Bugs found in this suite
 

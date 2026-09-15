@@ -8,14 +8,17 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 API_ROOT = Path(__file__).resolve().parents[2]
-load_dotenv(API_ROOT / ".env")
+# Compose injects the repo-root `.env`. Skip the API file inside Docker.
+if not Path("/.dockerenv").exists():
+    load_dotenv(API_ROOT / ".env")
 
 
 def _require(name: str) -> str:
     value = (os.getenv(name) or "").strip()
     if not value:
         raise RuntimeError(
-            f"Missing {name}. Copy services/api/.env.example to .env and set it."
+            f"Missing {name}. Set it in the repo-root `.env` (Docker) or "
+            "copy services/api/.env.example to services/api/.env."
         )
     return value
 

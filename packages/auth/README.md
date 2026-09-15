@@ -26,7 +26,7 @@ In `next.config`:
 transpilePackages: ["@repo/auth"]
 ```
 
-Set `NEXT_PUBLIC_API_BASE_URL` (default `http://localhost:8000`) for the Brasaland API. Talent Pipeline Tracker keeps `NEXT_PUBLIC_API_URL` for the 4Geeks Playground candidate API and must not send this JWT there.
+Set `NEXT_PUBLIC_API_BASE_URL` (default `http://localhost:8000`) for **browser** calls to the Brasaland API. In Docker, also set `INTERNAL_API_URL=http://backend:8000` so server-side `getBrasalandApiBase()` uses the Compose service name. Talent Pipeline Tracker keeps `NEXT_PUBLIC_API_URL` for the 4Geeks Playground candidate API and must not send this JWT there.
 
 The public website (`uis/website`) does not import this package.
 
