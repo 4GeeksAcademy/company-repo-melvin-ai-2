@@ -7,6 +7,12 @@ const TECHNICAL_ERROR =
   /traceback|status code|unexpected token|internal server error|failed \(\d{3}\)/i;
 
 export function getBrasalandApiBase(): string {
+  // Server-side (Docker UI container): Compose DNS, e.g. http://backend:8000.
+  // The browser cannot resolve that hostname, so client code keeps NEXT_PUBLIC_*.
+  if (typeof window === "undefined") {
+    const internal = process.env.INTERNAL_API_URL?.replace(/\/$/, "");
+    if (internal) return internal;
+  }
   return (
     process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
     "http://localhost:8000"

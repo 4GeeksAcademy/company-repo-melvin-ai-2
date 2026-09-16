@@ -84,22 +84,30 @@ describe("fieldErrorsFromApi", () => {
 });
 
 describe("getBrasalandApiBase", () => {
-  const original = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const originalPublic = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const originalInternal = process.env.INTERNAL_API_URL;
 
   afterEach(() => {
-    if (original === undefined) {
+    if (originalPublic === undefined) {
       delete process.env.NEXT_PUBLIC_API_BASE_URL;
     } else {
-      process.env.NEXT_PUBLIC_API_BASE_URL = original;
+      process.env.NEXT_PUBLIC_API_BASE_URL = originalPublic;
+    }
+    if (originalInternal === undefined) {
+      delete process.env.INTERNAL_API_URL;
+    } else {
+      process.env.INTERNAL_API_URL = originalInternal;
     }
   });
 
   test("strips a trailing slash from the env base URL", () => {
+    delete process.env.INTERNAL_API_URL;
     process.env.NEXT_PUBLIC_API_BASE_URL = "http://localhost:8000/";
     expect(getBrasalandApiBase()).toBe("http://localhost:8000");
   });
 
   test("defaults to localhost:8000 when unset", () => {
+    delete process.env.INTERNAL_API_URL;
     delete process.env.NEXT_PUBLIC_API_BASE_URL;
     expect(getBrasalandApiBase()).toBe("http://localhost:8000");
   });

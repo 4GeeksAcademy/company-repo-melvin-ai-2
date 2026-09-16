@@ -28,6 +28,30 @@ This repository is the **starter template** for transversal projects. You will w
 5. **Start implementing** in the right folder — do not dump everything in the root.
 6. **Document** what you add: each new app, service, agent, or pipeline gets a subfolder + README.
 
+## Docker (local platform)
+
+With Docker Desktop running, from the **repository root**:
+
+```bash
+cp .env.example .env
+# Fill SECRET_KEY, SEED_ADMIN_*, DATABASE_URL, and other names from services/api/.env
+docker compose up --build
+```
+
+If BuildKit fails on an Intel Mac (`Exec format error` / `buildx_buildkit_default`), retry with:
+
+```bash
+DOCKER_BUILDKIT=0 COMPOSE_BAKE=0 docker compose up --build
+```
+
+`DOCKER_BUILDKIT=0 COMPOSE_BAKE=0` is only that workaround. Graders can use plain `docker compose up --build` from the repository root.
+
+- Public website: http://localhost:3000
+- Backoffice: http://localhost:3001
+- API: http://localhost:8000/health
+
+The UI container runs both Next.js apps (`uis/start.sh`) with **webpack** (`next dev --webpack`) so Docker bind mounts do not trip Turbopack. On the Compose network the API host is the service name `backend` (`INTERNAL_API_URL=http://backend:8000`). Server-side fetches and `/backend-api/*` rewrites use that URL. Browser calls use `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000`. Bind mounts keep hot reload. Do not commit `.env`.
+
 ---
 
 ## How to think about this monorepo
