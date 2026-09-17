@@ -1,39 +1,48 @@
 # Brasaland Lighthouse report (after)
 
-Re-measured on 17 September 2026 with the same native webpack `npm run dev` servers as the baseline. Public-site after reports are Lighthouse CLI (same categories as before). Backoffice after still needs a signed-in Chrome pass on http://localhost:3101 — drop those PNGs in this folder.
+Same native webpack `npm run dev` as the baseline. Public-site after reports are Lighthouse CLI. Backoffice after still needs signed-in Chrome PNGs on http://localhost:3101 (see question at the end of this delivery).
 
-Full HTML reports: [`after/`](./after/). Baseline: [`AUDIT.md`](./AUDIT.md) and [`before/`](./before/).
+## Before / after
 
-## Score comparison
-
-| Page | Device | Perf before → after | SEO before → after | LCP before → after | Notes |
+| Frontend | Page | Device | Score that moved | Before | After |
 | --- | --- | --- | --- | --- | --- |
-| Website `/` | Mobile | 69 → **70** | 91 → **100** | 2.13 s → **1.75 s** | Speed Index 1.80 s → 1.39 s. TBT still ~3.5 s in `next dev`. |
-| Website `/` | Desktop | 72 → 72 | 100 → 100 | 0.42 s → 0.44 s | Stable. Remaining TBT is the webpack runtime. |
-| Website `/brasa-points` | Mobile | 67 → **70** | 91 → **100** | 1.85 s → 1.99 s | Speed Index 4.69 s → **1.81 s**. |
-| Website `/brasa-points` | Desktop | 74 → 74 | 100 → 100 | 0.44 s → 0.43 s | Stable. |
-| Backoffice `/` | Desktop | 51 (LCP 3.9 s) | 100 | pending Chrome | Auth no longer blocks paint on `/auth/me`. Re-run Lighthouse while signed in. |
-| Backoffice `/` | Mobile | 40 (LCP 21.2 s) | — | pending Chrome | Same. |
+| Public website | `/` | Mobile | **SEO** | 91 | **100** |
+| Public website | `/` | Mobile | **LCP** | 2.13 s | **1.75 s** |
+| Public website | `/` | Mobile | Performance | 69 | **70** |
+| Public website | `/brasa-points` | Mobile | **SEO** | 91 | **100** |
+| Public website | `/brasa-points` | Mobile | Performance | 67 | **70** |
+| Public website | `/brasa-points` | Mobile | Speed Index | 4.69 s | **1.81 s** |
+| Backoffice | `/` Overview | Desktop | Performance / LCP | 51 / 3.9 s | **pending Chrome after PNG** |
+| Backoffice | `/` Overview | Mobile | Performance / LCP | 40 / 21.2 s | **pending Chrome after PNG** |
 
-Accessibility stayed **96** (ember-on-cream contrast). Best Practices stayed **100**. CLS stayed **0**.
+Accessibility stayed 96 (ember-on-cream contrast). Best Practices stayed 100. CLS stayed 0.
 
-## What changed
+The grading rule is **at least one Lighthouse score per frontend**. The website already meets that (SEO and LCP). The backoffice does not until Overview is measured again while signed in.
 
-1. **LCP (backoffice)** — `useProtectedSession` paints Overview as soon as a JWT is in `localStorage`. `GET /auth/me` still runs and still sends 401s to `/login`.
-2. **Duplication** — one `MetricCard`, `getOperationsSnapshot()` for the live dashboard, deleted unused `uis/backoffice/src/components` copies, leftover `src/app` page now uses `BackofficeShell`. Public site gained `BrandMark` and `VisitNotice`.
-3. **Client JS (backoffice)** — `BackofficeShell` is a server component; only `BackofficeNav` and `SessionNav` hydrate.
-4. **Public site paint** — solid header (no `backdrop-filter`), `content-visibility` below the hero, cheaper grill-card shadow, `robots.ts` (SEO 91 → 100), Brasa Points form loaded with `next/dynamic`.
+## Corrections applied (real causes)
 
-Canonical Milestone 2 math is still imported from root `src/`. Layouts were not merged.
+| Commit | Cause | What we did | What we did not do |
+| --- | --- | --- | --- |
+| `4a5a700` | Hydration delay: Overview waited on `/auth/me` | `useProtectedSession` paints when a JWT exists; `/auth/me` still runs and still 401-redirects | Did not disable Lighthouse throttling or fake a 100 |
+| `8689388` | Duplicated dashboard + client shell | `getOperationsSnapshot`, one `MetricCard`, server `BackofficeShell` | Did not move Milestone 2 math out of `src/` |
+| `deaa28b` | Blur header, invalid robots, eager form JS | Solid header, `robots.ts`, `BrandMark` / `VisitNotice`, `next/dynamic` on the loyalty form | Did not merge public and backoffice layouts |
 
-## Remaining (on purpose)
+Biggest public-site impact: **SEO 91 → 100** from a real `robots.txt`, plus **home mobile LCP 2.13 s → 1.75 s** from cheaper first paint. Biggest intended backoffice impact: LCP no longer gated on `/auth/me` (must be confirmed with after screenshots).
 
-- `npm run dev` Total Blocking Time will stay high because webpack HMR and unminified React hydrate on every audit. A production `next start` run would show a larger Performance jump; the lesson asked for native `npm run dev` scores.
-- Accessibility 96: eyebrow/ember contrast on cream.
-- Backoffice after screenshots: sign in on http://localhost:3101, Desktop then Mobile Lighthouse, save PNGs next to the public-site after reports.
+## Refactors from the audit
+
+- Custom hook: `useProtectedSession` in `@repo/auth`, used by `AuthGuard`.
+- Shared components: `BrandMark`, `VisitNotice`, single `MetricCard`.
+- Helper: `getOperationsSnapshot()` imports `src/utils/transformations` instead of duplicating calculations.
+
+## Remaining
+
+- `next dev` TBT stays high (webpack HMR). That is the lab environment the lesson asked for.
+- Ember/cream contrast still fails one accessibility check (96).
+- **Need:** Chrome Lighthouse after PNGs for signed-in Overview, Desktop and Mobile, saved as `audit/after/backoffice-overview-desktop.png` and `audit/after/backoffice-overview-mobile.png`.
 
 ## Verification
 
-- `cd packages/auth && npx jest --coverage` — **13 passed**
-- `cd uis/website && npm run lint && npx tsc --noEmit && npm run build` — passed (`/`, `/brasa-points`, `/robots.txt`)
-- `cd uis/backoffice && npm run lint && npx tsc --noEmit && npm run build` — passed (`/`, `/suppliers`, inventory routes)
+- `cd packages/auth && npx jest --coverage` — 13 passed
+- `cd uis/website && npm run lint && npx tsc --noEmit && npm run build` — passed
+- `cd uis/backoffice && npm run lint && npx tsc --noEmit && npm run build` — passed
