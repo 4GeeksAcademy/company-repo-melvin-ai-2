@@ -1,17 +1,4 @@
-import {
-  sampleLocations,
-  sampleMenuItems,
-  sampleSales,
-  sampleWasteRecords,
-} from "../../../src/data/sampleOperations";
-import {
-  calculateAverageTicket,
-  calculateCountryComparison,
-  calculateLocationMargin,
-  calculateWasteCost,
-  findTopSellingItems,
-  rankLocationsByPerformance,
-} from "../../../src/utils/transformations";
+import { getOperationsSnapshot } from "@/lib/operationsSnapshot";
 import { MetricCard } from "./MetricCard";
 
 const usd = new Intl.NumberFormat("en-US", {
@@ -21,45 +8,25 @@ const usd = new Intl.NumberFormat("en-US", {
 });
 
 export function OperationsDashboard() {
-  const averageTicket = calculateAverageTicket(sampleSales, "USD");
-  const wasteCost = sampleLocations.reduce(
-    (total, location) =>
-      total +
-      calculateWasteCost(sampleWasteRecords, location.id, "USD"),
-    0,
-  );
-  const comparison = calculateCountryComparison(
-    sampleSales,
-    sampleLocations,
-    sampleMenuItems,
-  );
-  const ranking = rankLocationsByPerformance(
-    sampleLocations,
-    sampleSales,
-    sampleWasteRecords,
-    sampleMenuItems,
-  );
-  const topItems = findTopSellingItems(sampleSales, sampleMenuItems, 3);
-  const totalRevenue =
-    comparison.Colombia.totalRevenue.USD + comparison.USA.totalRevenue.USD;
+  const snapshot = getOperationsSnapshot();
 
   return (
     <>
       <section className="metric-grid" aria-label="Operations summary">
         <MetricCard
           label="Recorded revenue"
-          value={usd.format(totalRevenue)}
-          detail={`${sampleSales.length} sample transactions across two markets`}
+          value={usd.format(snapshot.totalRevenue)}
+          detail={`${snapshot.saleCount} sample transactions across two markets`}
           tone="positive"
         />
         <MetricCard
           label="Average ticket"
-          value={usd.format(averageTicket)}
+          value={usd.format(snapshot.averageTicket)}
           detail="Combined Colombia and Florida sample"
         />
         <MetricCard
           label="Waste exposure"
-          value={usd.format(wasteCost)}
+          value={usd.format(snapshot.wasteCost)}
           detail="Ingredient cost requiring attention"
           tone="warning"
         />
@@ -90,22 +57,14 @@ export function OperationsDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {ranking.map(({ location, score }) => (
+                {snapshot.locations.map(({ location, score, margin }) => (
                   <tr key={location.id}>
                     <td>
                       <strong>{location.name}</strong>
                       <span>{location.manager}</span>
                     </td>
                     <td>{location.country}</td>
-                    <td>
-                      {calculateLocationMargin(
-                        sampleSales,
-                        sampleMenuItems,
-                        location.id,
-                        "USD",
-                      ).toFixed(1)}
-                      %
-                    </td>
+                    <td>{margin.toFixed(1)}%</td>
                     <td>
                       <div className="score">
                         <span style={{ width: `${score}%` }} />
@@ -127,7 +86,7 @@ export function OperationsDashboard() {
             </div>
           </div>
           <ol>
-            {topItems.map(({ item, totalSold }, index) => (
+            {snapshot.topItems.map(({ item, totalSold }, index) => (
               <li key={item.id}>
                 <span className="rank">0{index + 1}</span>
                 <div>
