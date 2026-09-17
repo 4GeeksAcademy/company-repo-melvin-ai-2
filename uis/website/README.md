@@ -21,5 +21,8 @@ npm run build
 Routes:
 - `/`: complete corporate landing page.
 - `/brasa-points`: typed loyalty registration and validation.
+- `/robots.txt`: generated allow-all rules for crawlers.
+
+Lighthouse before/after: [`audit/AUDIT.md`](../../audit/AUDIT.md).
 
 This application does not expose APIs. Future submissions must use a service under the repository’s `services` folder.

@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/BrandMark";
 
 export function Footer() {
   return (
     <footer className="footer" id="contact">
       <div className="shell footer-grid">
         <div>
-          <p className="wordmark footer-brand">BRASALAND</p>
+          <BrandMark as="text" showBadge={false} className="wordmark footer-brand" />
           <p>Fire, flavor, and family since 2008.</p>
         </div>
         <div>
