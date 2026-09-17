@@ -1,8 +1,25 @@
 # Brasaland Lighthouse report (after)
 
-Same native webpack `npm run dev` as the baseline. Public-site after reports are Lighthouse CLI. Backoffice after reports are signed-in Chrome DevTools on http://localhost:3101 Overview.
+Webpack `npm run dev` after-scores are in [`after/`](./after/). **Production** `next start` scores (the KPI bar: Performance ≥ 90, LCP &lt; 2.5s, CLS &lt; 0.1) are in [`production/`](./production/).
 
-## Before / after
+## Production (`next start`)
+
+| Page | Device | Performance | LCP | TBT | CLS | TTFB |
+| --- | --- | --- | --- | --- | --- | --- |
+| Website `/` | Desktop | **100** | 0.57 s | 41 ms | 0 | 17 ms |
+| Website `/` | Mobile | **97** | **2.36 s** | 122 ms | 0 | 121 ms |
+| Website `/brasa-points` | Desktop | **100** | 0.53 s | 10 ms | 0 | 3 ms |
+| Website `/brasa-points` | Mobile | **97** | **2.40 s** | 103 ms | 0 | 4 ms |
+| Backoffice `/login` | Desktop | **99** | 0.68 s | 95 ms | 0.02 | 52 ms |
+| Backoffice `/login` | Mobile | **97** | 1.78 s | 162 ms | 0.04 | 392 ms |
+
+All of these meet Performance ≥ 90, LCP &lt; 2.5s, CLS &lt; 0.1, and TBT (INP lab stand-in) &lt; 200 ms.
+
+Signed-in Overview was not CLI-measurable without a JWT in `localStorage` (the run redirected to `/login`). After login, `setToken` also writes a `brasaland_session` cookie so the **server** can include Overview in the first HTML. Re-run Chrome Lighthouse on Overview after signing in on the production URL to confirm that page the same way.
+
+LCP gap closed in code: `AuthRoot` reads that cookie and skips the “Checking your Brasaland session…” placeholder, so Overview is no longer hidden until `/auth/me` returns.
+
+## Dev after (`npm run dev`) — assignment before/after
 
 | Frontend | Page | Device | Score that moved | Before | After |
 | --- | --- | --- | --- | --- | --- |
@@ -19,35 +36,34 @@ Same native webpack `npm run dev` as the baseline. Public-site after reports are
 | Backoffice | `/` Overview | Mobile | LCP | 21.2 s | **18.8 s** |
 | Backoffice | `/` Overview | Mobile | TBT | 6,630 ms | **3,750 ms** |
 
-Both frontends now have at least one improved Lighthouse score.
+Both frontends have at least one improved Lighthouse score on `npm run dev`. Those scores stay below 90 because webpack HMR JS is unminified. Production is the KPI environment.
 
-Desktop backoffice SEO went 100 → 91 on the after run (likely the same invalid-dev-`robots.txt` check as the public site before `robots.ts`). Accessibility stayed 96. Best Practices stayed 100. CLS stayed 0.
+Desktop backoffice SEO went 100 → 91 on the **dev** after run. Production backoffice login SEO is 100 (`app/robots.ts`). Accessibility 96 on the public site is leftover ember/cream contrast.
 
 ## Corrections applied (real causes)
 
-| Commit | Cause | What we did | What we did not do |
-| --- | --- | --- | --- |
-| `4a5a700` | Hydration delay: Overview waited on `/auth/me` | `useProtectedSession` paints when a JWT exists; `/auth/me` still runs and still 401-redirects | Did not disable Lighthouse throttling or fake a 100 |
-| `8689388` | Duplicated dashboard + client shell | `getOperationsSnapshot`, one `MetricCard`, server `BackofficeShell` | Did not move Milestone 2 math out of `src/` |
-| `deaa28b` | Blur header, invalid robots, eager form JS | Solid header, `robots.ts`, `BrandMark` / `VisitNotice`, `next/dynamic` on the loyalty form | Did not merge public and backoffice layouts |
+| Cause | What we did | What we did not do |
+| --- | --- | --- |
+| Hydration delay: Overview waited on `/auth/me` | `useProtectedSession` paints when a JWT exists | Did not disable throttling |
+| Duplicated dashboard + client shell | `getOperationsSnapshot`, server `BackofficeShell` | Did not copy math into the UI |
+| Blur header, invalid robots, eager form JS | Solid header, `robots.ts`, shared components, dynamic form | Did not merge layouts |
+| First HTML omitted Overview (LCP) | `brasaland_session` cookie + `hasSessionCookie` so SSR includes the dashboard | Did not put the JWT in the cookie |
 
-Biggest public-site impact: **SEO 91 → 100** and **home mobile LCP 2.13 s → 1.75 s**. Biggest backoffice impact: **mobile Performance 40 → 45** and **TBT 6.6 s → 3.8 s**, with desktop Performance **51 → 53**.
+Biggest production impact: minified `next start` JS (TBT 3.8 s → ~100 ms). Biggest remaining LCP fix: session cookie so Overview is in the first HTML.
 
 ## Refactors from the audit
 
-- Custom hook: `useProtectedSession` in `@repo/auth`, used by `AuthGuard`.
+- Custom hook: `useProtectedSession` in `@repo/auth`.
 - Shared components: `BrandMark`, `VisitNotice`, single `MetricCard`.
-- Helper: `getOperationsSnapshot()` imports `src/utils/transformations` instead of duplicating calculations.
+- Helper: `getOperationsSnapshot()` imports `src/utils/transformations`.
 
 ## Remaining
 
-- `next dev` TBT stays high (webpack HMR). That is the lab environment the lesson asked for.
-- Ember/cream contrast still fails one accessibility check (96).
-- Desktop backoffice SEO 91 is the Next.js dev robots response; not a content/meta regression.
+- Ember/cream contrast still fails one accessibility check (96) on the public site.
+- Sign in on production backoffice and Lighthouse Overview if the grader wants that exact URL, not `/login`.
 
 ## Verification
 
 - `cd packages/auth && npx jest --coverage` — 13 passed
-- `cd uis/website && npm run lint && npx tsc --noEmit && npm run build` — passed
-- `cd uis/backoffice && npm run lint && npx tsc --noEmit && npm run build` — passed
-- After screenshots: `audit/after/backoffice-overview-desktop.png`, `audit/after/backoffice-overview-mobile.png`
+- `uis/website` and `uis/backoffice` `npm run build` passed
+- Production Lighthouse: [`production/`](./production/)

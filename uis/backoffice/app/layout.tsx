@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { AuthRoot } from "@repo/auth";
+import { cookies } from "next/headers";
+import { AuthRoot, SESSION_COOKIE } from "@repo/auth";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,15 +8,18 @@ export const metadata: Metadata = {
   description: "Brasaland internal operations workspace.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const hasSessionCookie =
+    (await cookies()).get(SESSION_COOKIE)?.value === "1";
+
   return (
     <html lang="en">
       <body>
-        <AuthRoot>{children}</AuthRoot>
+        <AuthRoot hasSessionCookie={hasSessionCookie}>{children}</AuthRoot>
       </body>
     </html>
   );

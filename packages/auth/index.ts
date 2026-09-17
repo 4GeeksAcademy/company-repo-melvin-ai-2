@@ -15,7 +15,7 @@ export {
   parseApiError,
   messageForHttpStatus,
 } from "./client";
-export { getToken, setToken, clearToken, hasToken } from "./token";
+export { getToken, setToken, clearToken, hasToken, SESSION_COOKIE } from "./token";
 export { useAuthApi } from "./useAuthApi";
 export { useProtectedSession } from "./useProtectedSession";
 export { canPaintProtectedView } from "./sessionPaint";

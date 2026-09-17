@@ -3,8 +3,15 @@
 import { ErrorBanner } from "./ErrorBanner";
 import { useProtectedSession } from "./useProtectedSession";
 
-export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { ready, checking, error, retry } = useProtectedSession();
+export function AuthGuard({
+  children,
+  hasSessionCookie = false,
+}: {
+  children: React.ReactNode;
+  hasSessionCookie?: boolean;
+}) {
+  const { ready, checking, error, retry } =
+    useProtectedSession(hasSessionCookie);
 
   if (checking && !ready) {
     return (

@@ -5,7 +5,7 @@ Shared Brasaland authentication for internal Next.js apps. Do not copy login/reg
 ## Public API
 
 - `AuthRoot` — provider + client guard (skips `/login`, `/register`, `/forgot-password`, `/reset-password`)
-- `useProtectedSession` — paints the workspace as soon as a JWT exists, then confirms `GET /auth/me`
+- `useProtectedSession` — paints the workspace as soon as a JWT exists, then confirms `GET /auth/me`. A `brasaland_session` cookie lets the server include Overview in the first HTML (LCP).
 - `AUTH_PUBLIC_PATHS` — those public pathnames
 - `LoginForm`, `RegisterForm`, `ProfileForm`, `ForgotPasswordForm`, `ResetPasswordForm`, `ChangePasswordForm`
 - `SessionNav` — profile, change-password, logout

@@ -12,10 +12,10 @@ import {
 import { canPaintProtectedView } from "./sessionPaint";
 import { clearToken, getToken, hasToken } from "./token";
 
-export function useProtectedSession() {
+export function useProtectedSession(hasSessionCookie = false) {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
-  const [checking, setChecking] = useState(true);
+  const [ready, setReady] = useState(hasSessionCookie);
+  const [checking, setChecking] = useState(!hasSessionCookie);
   const [error, setError] = useState<string | null>(null);
 
   const verify = useCallback(async () => {
