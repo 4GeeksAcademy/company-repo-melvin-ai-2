@@ -5,6 +5,7 @@ Shared Brasaland authentication for internal Next.js apps. Do not copy login/reg
 ## Public API
 
 - `AuthRoot` — provider + client guard (skips `/login`, `/register`, `/forgot-password`, `/reset-password`)
+- `useProtectedSession` — paints the workspace as soon as a JWT exists, then confirms `GET /auth/me`
 - `AUTH_PUBLIC_PATHS` — those public pathnames
 - `LoginForm`, `RegisterForm`, `ProfileForm`, `ForgotPasswordForm`, `ResetPasswordForm`, `ChangePasswordForm`
 - `SessionNav` — profile, change-password, logout
@@ -32,7 +33,7 @@ The public website (`uis/website`) does not import this package.
 
 ## Tests
 
-Helper unit tests (`token.ts`, `client.ts`) run with Jest. Commands and cases: repo-root [`TESTING.md`](../../TESTING.md).
+Helper unit tests (`token.ts`, `client.ts`, `sessionPaint.ts`) run with Jest. Commands and cases: repo-root [`TESTING.md`](../../TESTING.md).
 
 ```bash
 cd packages/auth

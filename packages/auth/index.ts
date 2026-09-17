@@ -17,4 +17,6 @@ export {
 } from "./client";
 export { getToken, setToken, clearToken, hasToken } from "./token";
 export { useAuthApi } from "./useAuthApi";
+export { useProtectedSession } from "./useProtectedSession";
+export { canPaintProtectedView } from "./sessionPaint";
 export type { AuthMe, Profile, UserRole, TokenResponse, FieldErrors } from "./types";
