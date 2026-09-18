@@ -12,12 +12,14 @@ Webpack `npm run dev` after-scores are in [`after/`](./after/). **Production** `
 | Website `/brasa-points` | Mobile | **97** | **2.40 s** | 103 ms | 0 | 4 ms |
 | Backoffice `/login` | Desktop | **99** | 0.68 s | 95 ms | 0.02 | 52 ms |
 | Backoffice `/login` | Mobile | **97** | 1.78 s | 162 ms | 0.04 | 392 ms |
+| Backoffice `/` Overview | Desktop | **100** | **0.4 s** | 10 ms | 0 | — |
+| Backoffice `/` Overview | Mobile | **96** | **1.2 s** | 250 ms | 0 | — |
 
-All of these meet Performance ≥ 90, LCP &lt; 2.5s, CLS &lt; 0.1, and TBT (INP lab stand-in) &lt; 200 ms.
+Signed-in Overview Chrome PNGs: [`production/backoffice-overview-desktop.png`](./production/backoffice-overview-desktop.png) and [`production/backoffice-overview-mobile.png`](./production/backoffice-overview-mobile.png). Measured 17 September 2026 at `http://127.0.0.1:3101/` after Lucía signed in (`next start`; CORS on `:3111` blocks `/auth/login`). Accessibility 96, Best Practices 100, SEO 100 on both.
 
-Signed-in Overview was not CLI-measurable without a JWT in `localStorage` (the run redirected to `/login`). After login, `setToken` also writes a `brasaland_session` cookie so the **server** can include Overview in the first HTML. Re-run Chrome Lighthouse on Overview after signing in on the production URL to confirm that page the same way.
+All of these meet Performance ≥ 90, LCP &lt; 2.5s, and CLS &lt; 0.1. TBT (INP lab stand-in) is under 200 ms except Overview mobile (250 ms).
 
-LCP gap closed in code: `AuthRoot` reads that cookie and skips the “Checking your Brasaland session…” placeholder, so Overview is no longer hidden until `/auth/me` returns.
+LCP gap closed in code: `AuthRoot` reads the `brasaland_session` cookie and skips the “Checking your Brasaland session…” placeholder, so Overview is in the first HTML instead of waiting on `/auth/me`.
 
 ## Dev after (`npm run dev`) — assignment before/after
 
@@ -49,7 +51,7 @@ Desktop backoffice SEO went 100 → 91 on the **dev** after run. Production back
 | Blur header, invalid robots, eager form JS | Solid header, `robots.ts`, shared components, dynamic form | Did not merge layouts |
 | First HTML omitted Overview (LCP) | `brasaland_session` cookie + `hasSessionCookie` so SSR includes the dashboard | Did not put the JWT in the cookie |
 
-Biggest production impact: minified `next start` JS (TBT 3.8 s → ~100 ms). Biggest remaining LCP fix: session cookie so Overview is in the first HTML.
+Biggest production impact: minified `next start` JS (TBT 3.8 s → 10–250 ms). Session cookie put Overview in the first HTML (LCP 3.9 s / 21.2 s on webpack → **0.4 s / 1.2 s** on `next start`).
 
 ## Refactors from the audit
 
@@ -59,11 +61,11 @@ Biggest production impact: minified `next start` JS (TBT 3.8 s → ~100 ms). Big
 
 ## Remaining
 
-- Ember/cream contrast still fails one accessibility check (96) on the public site.
-- Sign in on production backoffice and Lighthouse Overview if the grader wants that exact URL, not `/login`.
+- Ember/cream contrast still fails one accessibility check (96) on the public site and signed-in Overview.
+- Overview mobile TBT is 250 ms (above the 200 ms lab stand-in; Performance is still **96**).
 
 ## Verification
 
 - `cd packages/auth && npx jest --coverage` — 13 passed
 - `uis/website` and `uis/backoffice` `npm run build` passed
-- Production Lighthouse: [`production/`](./production/)
+- Production Lighthouse: [`production/`](./production/) (Overview Chrome: desktop **100**, mobile **96**)
