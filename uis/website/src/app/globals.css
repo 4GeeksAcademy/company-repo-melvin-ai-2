@@ -77,8 +77,7 @@ a {
   z-index: 20;
   top: 0;
   border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--paper) 92%, transparent);
-  backdrop-filter: blur(14px);
+  background: var(--paper);
 }
 
 .nav-shell {
@@ -266,7 +265,8 @@ h3 {
   background:
     linear-gradient(0deg, rgba(24, 11, 6, 0.86), transparent 70%),
     repeating-linear-gradient(102deg, #7e2914 0 16px, #ad471e 16px 24px);
-  box-shadow: 0 28px 80px rgba(18, 7, 3, 0.38);
+  box-shadow: 0 16px 36px rgba(18, 7, 3, 0.28);
+  contain: paint;
 }
 
 .grill-card::before {
@@ -312,6 +312,14 @@ h3 {
 
 .section {
   padding-block: 7rem;
+}
+
+.story,
+.section-cream,
+.menu-feature,
+.locations {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 720px;
 }
 
 .story-grid,

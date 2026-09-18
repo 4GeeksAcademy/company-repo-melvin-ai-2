@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/BrandMark";
 
 export function Header() {
   return (
@@ -7,12 +8,7 @@ export function Header() {
         Skip to content
       </a>
       <div className="shell nav-shell">
-        <Link className="wordmark" href="/" aria-label="Brasaland home">
-          <span className="brand-mark" aria-hidden="true">
-            B
-          </span>
-          BRASALAND
-        </Link>
+        <BrandMark />
         <nav aria-label="Main navigation">
           <Link href="/#story">Story</Link>
           <Link href="/#locations">Locations</Link>

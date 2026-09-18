@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { VisitNotice } from "@/components/VisitNotice";
 import { locations, pillars } from "@/data/site";
 
 export function Hero() {
@@ -111,10 +112,7 @@ export function MenuFeature() {
             From our signature picanha to crisp sides and family combos, every
             plate is prepared to order and built for sharing.
           </p>
-          <p className="notice">
-            Want to place an order? Call your favorite location or visit us
-            directly. Online ordering coming soon!
-          </p>
+          <VisitNotice />
         </div>
       </div>
     </section>

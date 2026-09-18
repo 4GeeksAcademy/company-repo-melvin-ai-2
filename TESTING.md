@@ -34,7 +34,7 @@ Recorded **2026-08-31** from the git root (`uv run pytest --cov`):
 | --- | --- |
 | `uv run pytest` | **44 passed** |
 | `uv run pytest --cov` | **44 passed**, `app.auth` coverage **83%** (gate 70%) |
-| `cd packages/auth && npx jest --coverage` | **11 passed** |
+| `cd packages/auth && npx jest --coverage` | **13 passed** |
 
 Line coverage on `app.auth` is 83%, not 100%. Untouched lines are Resend send internals, seed CLI `main`, and TinyDB disk-error paths. Those are not auth *decisions*; the cases above cover login, expiry, reset consume-once, and privilege checks.
 

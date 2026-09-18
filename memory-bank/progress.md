@@ -1,9 +1,10 @@
 # Progress
 
 ## Current Milestone
-Brasaland Docker dev stack on `company_Monorepo_repo_containerization-Melvin-AI2`: `docker compose up` runs website + backoffice in one UI container and FastAPI with `--reload`.
+Brasaland Lighthouse audit on `feature/brasaland-lighthouse-audit`: measure Overview + public `/` and `/brasa-points`, extract shared UI, reduce LCP/TBT without rewriting architecture.
 
 ## Completed
+- Lighthouse audit (2026-09-17): Dev after plus **production** `next start`: website home/brasa-points mobile **97** (LCP 2.36s / 2.40s), desktop **100**. Backoffice login **97 / 99**. Signed-in Overview Chrome: desktop **100** (LCP 0.4s), mobile **96** (LCP 1.2s). Evidence in `audit/production/` and `audit/REPORT.md`.
 - Ticket #infra-40: `uis/Dockerfile` + `uis/start.sh` (website **3000**, backoffice **3001**); `services/Dockerfile` (`uv pip install -r requirements.txt`, Uvicorn `--reload`); root `docker-compose.yml` on network `brasaland-dev`; env from root `.env` only; `INTERNAL_API_URL=http://backend:8000`. `.dockerignore` under `uis/` and `services/`.
 - Milestone 5 inventory UI: `/backoffice/inventory/products`, `/orders/inbound`, `/orders/outbound`, `/orders` in the existing backoffice (port 3101). Ingredient/supplier/location dropdowns (no raw IDs); stock badges empty / low (`< 10`) / healthy (`≥ 10`); `lib/inventory.ts` uses `authFetch`. CONTEXT: [`memory-bank/inventory-ui.md`](inventory-ui.md).
 - Milestone 5 inventory: `app/inventory/` SQLModel `Ingredient` / `IngredientEntry` / `IngredientExit` (no stored stock); registered from `app/routers/inventory.py`; TinyDB `get_db()` unchanged, SQLModel `get_inventory_session` re-exported from `database.py`; Bearer on all `/inventory` routes; chain-wide `current_stock`; `user_uuid` is `str(TinyDB id)`. CONTEXT: [`memory-bank/inventory-orm.md`](inventory-orm.md).
@@ -27,6 +28,7 @@ Brasaland Docker dev stack on `company_Monorepo_repo_containerization-Melvin-AI2
 - Sprint 3 AUTH-03: forgot/reset/change-password API + `@repo/auth` forms and thin routes; reset tokens hashed in TinyDB (expiry + one-time); Resend wired behind `RESEND_API_KEY`.
 
 ## Verification
+- Lighthouse audit (2026-09-17): `cd packages/auth && npx jest --coverage` — 13 passed. `uis/website` lint + `tsc --noEmit` + `npm run build` (includes `/robots.txt`). `uis/backoffice` lint + `tsc --noEmit` + `npm run build` (includes `/`, `/login`, `/suppliers`, inventory). Evidence in `audit/AUDIT.md` and `audit/REPORT.md`. Backoffice after Chrome PNGs: desktop Performance 51→53, mobile 40→45.
 - Docker files (2026-09-15): Matches “What We Will Evaluate”: `docker compose up --build` from the root; bind mounts on `backend` and `ui`; one UI container on **3000** + **3001**; `INTERNAL_API_URL=http://backend:8000` for container DNS; no secrets in Dockerfiles/Compose; `.env` gitignored and not in git history; `.dockerignore` under `uis/` and `services/`. In Docker, FastAPI does not overlay `services/api/.env` (Compose root `.env` only). Intel Mac BuildKit flags are README troubleshooting only.
 - Inventory UI (2026-09-10): `cd uis/backoffice && npm run lint` passed; `npx tsc --noEmit` passed; `npm run build` listed `/backoffice/inventory/products`, `/orders`, `/orders/inbound`, `/orders/outbound`. Live session on `:3101`: ingredients table (6 SKUs, empty/low/healthy badges), inbound name/supplier/kitchen dropdowns, outbound over-stock warning plus API `Insufficient stock` 400, orders history. `.env.local` uses `NEXT_PUBLIC_INVENTORY_API_URL=http://localhost:8000`.
 - Inventory UI (2026-09-10): `cd uis/backoffice && npm run lint` passed; `npx tsc --noEmit` passed; `npm run build` listed `/backoffice/inventory/products`, `/orders`, `/orders/inbound`, `/orders/outbound`. Live session on `:3101`: ingredients table (6 SKUs, empty/low/healthy badges), inbound name/supplier/kitchen dropdowns, outbound over-stock warning plus API `Insufficient stock` 400, orders history. `.env.local` uses `NEXT_PUBLIC_INVENTORY_API_URL=http://localhost:8000`.
@@ -58,7 +60,7 @@ Brasaland Docker dev stack on `company_Monorepo_repo_containerization-Melvin-AI2
 - Company File Analyzer CONTEXT: `memory-bank/company-file-analyzer.md`.
 - Supplier Directory CONTEXT: `memory-bank/supplier-directory.md` (root `CONTEXT.md` points there; `scripts/CONTEXT-brasaland.en.md` is a pointer).
 - Brasaland Identity: [`docs/masterplan.md`](../docs/masterplan.md) and [`docs/master_instructions.md`](../docs/master_instructions.md).
-- API env names: `services/api/.env.example`.
+- Lighthouse audit: [`audit/AUDIT.md`](../audit/AUDIT.md), [`audit/REPORT.md`](../audit/REPORT.md).
 
 ## Incident Report Processor (Phase 1)
 - Sample CSV: `scripts/incidents-brasaland.csv` (**100-row** grading sample).

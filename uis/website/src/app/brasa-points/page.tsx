@@ -1,7 +1,17 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
-import { LoyaltyForm } from "@/components/LoyaltyForm";
+import { VisitNotice } from "@/components/VisitNotice";
+
+const LoyaltyForm = dynamic(
+  () => import("@/components/LoyaltyForm").then((mod) => mod.LoyaltyForm),
+  {
+    loading: () => (
+      <p role="status">Loading the Brasa Points registration form…</p>
+    ),
+  },
+);
 
 export const metadata: Metadata = {
   title: "Join Brasa Points",
@@ -22,10 +32,7 @@ export default function BrasaPointsPage() {
               Join free and earn points at any Brasaland restaurant in Colombia
               or Florida. Membership is available to guests 18 and older.
             </p>
-            <p className="notice">
-              Want to place an order? Call your favorite location or visit us
-              directly. Online ordering coming soon!
-            </p>
+            <VisitNotice />
           </div>
         </section>
         <section className="shell narrow form-section" aria-label="Registration form">

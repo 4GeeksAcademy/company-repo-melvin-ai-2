@@ -42,6 +42,8 @@ npm run dev
 
 Open `http://localhost:3101/suppliers` or `http://localhost:3101/backoffice/inventory/products`.
 
+Lighthouse before/after for Overview: [`audit/AUDIT.md`](../../audit/AUDIT.md).
+
 `.env.local` (gitignored) should include the lesson inventory origin, same FastAPI process as suppliers:
 
 ```text

@@ -11,10 +11,18 @@ export const AUTH_PUBLIC_PATHS = new Set([
   "/reset-password",
 ]);
 
-export function AuthRoot({ children }: { children: React.ReactNode }) {
+export function AuthRoot({
+  children,
+  hasSessionCookie = false,
+}: {
+  children: React.ReactNode;
+  hasSessionCookie?: boolean;
+}) {
   const pathname = usePathname() || "/";
   if (AUTH_PUBLIC_PATHS.has(pathname)) {
     return <>{children}</>;
   }
-  return <AuthGuard>{children}</AuthGuard>;
+  return (
+    <AuthGuard hasSessionCookie={hasSessionCookie}>{children}</AuthGuard>
+  );
 }
