@@ -89,7 +89,10 @@ def test_orders_list_newest_first_with_ingredient_and_type(
     types = {row["type"] for row in payload}
     assert "entry" in types
     assert "exit" in types
-    assert all("ingredient" in row and "country" in row["ingredient"] for row in payload)
+    assert all(
+        "ingredient_name" in row and "unit" in row and "ingredient" not in row
+        for row in payload
+    )
     created = [row["created_at"] for row in payload]
     assert created == sorted(created, reverse=True)
     assert any(row.get("reason") == "waste" for row in payload if row["type"] == "exit")

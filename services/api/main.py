@@ -6,7 +6,6 @@ import logging
 import sys
 from contextlib import asynccontextmanager
 from json import JSONDecodeError
-from typing import Dict
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -18,6 +17,7 @@ from app.auth.router import router as auth_router
 from app.auth.seed import seed_auth_if_empty
 from app.errors import PersistenceError
 from app.profiles.router import router as profiles_router
+from app.public_schemas import HealthResponse
 from app.routers.incidents import router as incidents_router
 from app.routers.inventory import router as inventory_router
 from app.users.router import router as users_router
@@ -155,6 +155,6 @@ async def unhandled_exception_handler(
     return JSONResponse(status_code=500, content={"detail": GENERIC_500})
 
 
-@app.get("/health")
-def health() -> Dict[str, str]:
-    return {"status": "ok"}
+@app.get("/health", response_model=HealthResponse)
+def health() -> HealthResponse:
+    return HealthResponse()

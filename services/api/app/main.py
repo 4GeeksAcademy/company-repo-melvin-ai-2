@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.public_schemas import HealthResponse
 from app.routers.incidents import router as incidents_router
 
 app = FastAPI(
@@ -25,6 +26,6 @@ app.add_middleware(
 app.include_router(incidents_router)
 
 
-@app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+@app.get("/health", response_model=HealthResponse)
+def health() -> HealthResponse:
+    return HealthResponse()

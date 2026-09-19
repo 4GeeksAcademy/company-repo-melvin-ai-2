@@ -17,6 +17,8 @@ def test_login_issues_token_for_valid_credentials(client, lucia):
     # Decision: a session exists only if the JWT identifies Lucía.
     assert token
     assert user_id_from_token(token) == lucia["id"]
+    # Unauthenticated login must not echo the email used in the request.
+    assert "email" not in response.json()
 
 
 def test_login_inactive_operator_does_not_receive_a_token(client, lucia):

@@ -134,13 +134,16 @@ class OutboundRead(BaseModel):
 
 
 class OrderListItem(BaseModel):
+    """History row. Flat ingredient fields — the table only shows name and unit."""
+
     type: Literal["entry", "exit"]
     id: int
     ingredient_id: int
+    ingredient_name: str
+    unit: str
     quantity: float
     location_id: int
     created_at: datetime
     user_uuid: str
-    ingredient: IngredientPublic
     supplier_name: Optional[str] = None
     reason: Optional[str] = None

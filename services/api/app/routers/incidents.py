@@ -11,6 +11,7 @@ from app.incidents.analysis import (
     export_results_csv_text,
     result_to_summary,
 )
+from app.incidents.schemas import IncidentAnalysisResponse
 from app.incidents.store import get_last_result, save_last_result
 
 router = APIRouter(
@@ -41,8 +42,10 @@ def _validate_upload(filename: str | None, content_type: str | None) -> None:
         pass
 
 
-@router.post("/analyze")
-async def analyze_incidents(file: UploadFile = File(...)) -> dict:
+@router.post("/analyze", response_model=IncidentAnalysisResponse)
+async def analyze_incidents(
+    file: UploadFile = File(...),
+) -> IncidentAnalysisResponse:
     _validate_upload(file.filename, file.content_type)
 
     raw = await file.read()
@@ -69,10 +72,14 @@ async def analyze_incidents(file: UploadFile = File(...)) -> dict:
         )
 
     save_last_result(result)
-    return result_to_summary(result)
+    return IncidentAnalysisResponse.model_validate(result_to_summary(result))
 
 
-@router.get("/results/export")
+@router.get(
+    "/results/export",
+    response_class=Response,
+    responses={200: {"content": {"text/csv": {}}}},
+)
 async def export_results() -> Response:
     result = get_last_result()
     if result is None:

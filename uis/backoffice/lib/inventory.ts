@@ -25,24 +25,16 @@ export type Ingredient = {
   current_stock: number;
 };
 
-export type IngredientSummary = {
-  id: number;
-  name: string;
-  sku: string;
-  unit: string;
-  category: string;
-  country: string;
-};
-
 export type OrderRow = {
   type: "entry" | "exit";
   id: number;
   ingredient_id: number;
+  ingredient_name: string;
+  unit: string;
   quantity: number;
   location_id: number;
   created_at: string;
   user_uuid: string;
-  ingredient: IngredientSummary;
   supplier_name?: string | null;
   reason?: string | null;
 };

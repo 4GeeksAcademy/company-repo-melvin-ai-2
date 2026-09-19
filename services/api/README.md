@@ -93,7 +93,7 @@ Ingredient stock is **computed** chain-wide (inbound − outbound per SKU, not p
 | `GET` | `/inventory/products/{id}` | One ingredient with derived stock |
 | `POST` | `/inventory/orders/inbound` | Log a supplier delivery (`IngredientEntry`) |
 | `POST` | `/inventory/orders/outbound` | Log consumption or waste; `400` if stock would go negative |
-| `GET` | `/inventory/orders` | Entries and exits, newest first, with ingredient data |
+| `GET` | `/inventory/orders` | Entries and exits, newest first; list rows use `ingredient_name` and `unit` |
 
 `user_uuid` on orders is `str(TinyDB user id)`. TinyDB auth is unchanged.
 

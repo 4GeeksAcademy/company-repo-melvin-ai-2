@@ -13,5 +13,6 @@ This folder holds **cross-cutting documentation** for the monorepo: architecture
 - [`masterplan.md`](./masterplan.md) — Brasaland Identity architecture and sprint plan (AUTH-01 / AUTH-02 / AUTH-03).
 - [`master_instructions.md`](./master_instructions.md) — ordered do-this checklist for the same Identity project.
 - [`Global_Criteria.md`](./Global_Criteria.md) — single grading rubric from the three syllabi **What We Will Evaluate** sections.
+- [`serialization-audit.md`](./serialization-audit.md) — FastAPI `response_model` audit: every endpoint, original state, and serializer changes.
 
 > _Spanish version: [README.es.md](./README.es.md)._

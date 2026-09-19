@@ -28,6 +28,22 @@ def test_register_creates_operator_with_user_role_and_profile(client):
     assert profile["name"] == "Carlos Restrepo"
 
 
+def test_register_response_does_not_echo_email(client):
+    response = client.post(
+        "/users",
+        json={
+            "email": CARLOS_EMAIL,
+            "password": CARLOS_PASSWORD,
+            "name": "Carlos Restrepo",
+        },
+    )
+    payload = response.json()
+    # Unauthenticated register must not bounce the submitted address back.
+    assert "email" not in payload
+    assert payload.get("id") is not None
+    assert payload.get("role") == "user"
+
+
 def test_register_duplicate_email_does_not_create_second_user(client):
     payload = {
         "email": CARLOS_EMAIL,

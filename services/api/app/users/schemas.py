@@ -46,6 +46,27 @@ class UserUpdate(BaseModel):
         return cleaned
 
 
+class RegisterResponse(BaseModel):
+    """Public signup confirmation. Does not echo the submitted email."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    is_active: bool
+    role: UserRole
+    created_at: datetime
+
+
+class UserListItem(BaseModel):
+    """Authenticated directory row — identity only, not session timestamps."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: str
+    role: UserRole
+
+
 class UserPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
