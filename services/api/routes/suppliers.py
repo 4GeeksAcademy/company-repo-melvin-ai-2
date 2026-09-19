@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -11,6 +11,7 @@ import database
 from models import (
     RateUpdate,
     StatusUpdate,
+    SeedResponse,
     SupplierCreate,
     SupplierResponse,
     utc_now,
@@ -47,11 +48,11 @@ def list_suppliers(
     return [_as_response(row) for row in rows]
 
 
-@router.post("/admin/seed", include_in_schema=False)
-def seed_via_api() -> Dict[str, int]:
+@router.post("/admin/seed", response_model=SeedResponse, include_in_schema=False)
+def seed_via_api() -> SeedResponse:
     """Optional helper for demos; preferred path is `uv run seed`."""
     inserted = run_seed()
-    return {"inserted": inserted}
+    return SeedResponse(inserted=inserted)
 
 
 @router.get("/{supplier_id}", response_model=SupplierResponse)
@@ -87,7 +88,7 @@ def update_status(supplier_id: int, payload: StatusUpdate) -> SupplierResponse:
     return _as_response(updated)
 
 
-@router.delete("/{supplier_id}", status_code=204)
+@router.delete("/{supplier_id}", status_code=204, response_model=None)
 def delete_supplier(supplier_id: int) -> None:
     if not database.delete_supplier(supplier_id):
         raise HTTPException(status_code=404, detail="Supplier not found")

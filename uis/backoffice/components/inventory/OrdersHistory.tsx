@@ -117,9 +117,9 @@ export function OrdersHistory() {
                           : locationLabel(row.location_id)}
                       </div>
                     </td>
-                    <td>{row.ingredient.name}</td>
+                    <td>{row.ingredient_name}</td>
                     <td>
-                      {formatQuantity(row.quantity, row.ingredient.unit)}
+                      {formatQuantity(row.quantity, row.unit)}
                     </td>
                     <td>{formatOrderWhen(row.created_at)}</td>
                     <td>

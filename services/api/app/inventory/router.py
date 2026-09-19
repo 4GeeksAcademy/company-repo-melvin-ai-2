@@ -170,11 +170,12 @@ def list_orders(
                 type="entry",
                 id=entry.id,
                 ingredient_id=entry.ingredient_id,
+                ingredient_name=ingredient.name,
+                unit=ingredient.unit,
                 quantity=entry.quantity,
                 location_id=entry.location_id,
                 created_at=entry.created_at,
                 user_uuid=entry.user_uuid,
-                ingredient=IngredientPublic.model_validate(ingredient),
                 supplier_name=entry.supplier_name,
             )
         )
@@ -187,11 +188,12 @@ def list_orders(
                 type="exit",
                 id=exit_row.id,
                 ingredient_id=exit_row.ingredient_id,
+                ingredient_name=ingredient.name,
+                unit=ingredient.unit,
                 quantity=exit_row.quantity,
                 location_id=exit_row.location_id,
                 created_at=exit_row.created_at,
                 user_uuid=exit_row.user_uuid,
-                ingredient=IngredientPublic.model_validate(ingredient),
                 reason=exit_row.reason,
             )
         )

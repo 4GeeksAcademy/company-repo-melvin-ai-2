@@ -24,6 +24,23 @@ def public_user(row: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def register_user_public(row: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": row["id"],
+        "is_active": bool(row.get("is_active", True)),
+        "role": row["role"],
+        "created_at": row["created_at"],
+    }
+
+
+def list_user_public(row: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": row["id"],
+        "email": row["email"],
+        "role": row["role"],
+    }
+
+
 def public_profile(row: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "id": row["id"],

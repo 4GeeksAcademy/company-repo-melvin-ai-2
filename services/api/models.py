@@ -93,6 +93,10 @@ class SupplierResponse(BaseModel):
     notes: Optional[str] = None
 
 
+class SeedResponse(BaseModel):
+    inserted: int
+
+
 class RateUpdate(BaseModel):
     rate_per_unit: float = Field(gt=0)
 

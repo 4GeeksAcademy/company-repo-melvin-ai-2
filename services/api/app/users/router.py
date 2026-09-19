@@ -8,7 +8,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.auth.deps import get_current_user
 from app.users import service as users_service
-from app.users.schemas import UserCreate, UserPublic, UserRole, UserUpdate
+from app.users.schemas import (
+    RegisterResponse,
+    UserCreate,
+    UserListItem,
+    UserPublic,
+    UserRole,
+    UserUpdate,
+)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -26,9 +33,9 @@ def _require_self_or_admin(current_user: dict, user_id: int) -> None:
     )
 
 
-@router.post("", response_model=UserPublic, status_code=201)
-@router.post("/", response_model=UserPublic, status_code=201, include_in_schema=False)
-def register_user(payload: UserCreate) -> UserPublic:
+@router.post("", response_model=RegisterResponse, status_code=201)
+@router.post("/", response_model=RegisterResponse, status_code=201, include_in_schema=False)
+def register_user(payload: UserCreate) -> RegisterResponse:
     try:
         user = users_service.create_user(
             email=payload.email,
@@ -40,14 +47,14 @@ def register_user(payload: UserCreate) -> UserPublic:
         )
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return UserPublic.model_validate(users_service.public_user(user))
+    return RegisterResponse.model_validate(users_service.register_user_public(user))
 
 
-@router.get("", response_model=List[UserPublic])
-@router.get("/", response_model=List[UserPublic], include_in_schema=False)
-def list_users(_current_user: dict = Depends(get_current_user)) -> List[UserPublic]:
+@router.get("", response_model=List[UserListItem])
+@router.get("/", response_model=List[UserListItem], include_in_schema=False)
+def list_users(_current_user: dict = Depends(get_current_user)) -> List[UserListItem]:
     return [
-        UserPublic.model_validate(users_service.public_user(row))
+        UserListItem.model_validate(users_service.list_user_public(row))
         for row in users_service.list_users()
     ]
 
@@ -90,7 +97,7 @@ def update_user(
     return UserPublic.model_validate(users_service.public_user(updated))
 
 
-@router.delete("/{user_id}", status_code=204)
+@router.delete("/{user_id}", status_code=204, response_model=None)
 def delete_user(
     user_id: int, current_user: dict = Depends(get_current_user)
 ) -> None:
