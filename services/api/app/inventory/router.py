@@ -6,6 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session, select
 
 from app.auth.deps import get_current_user
+from app.cache import (
+    CATALOG_TTL_SECONDS,
+    PRODUCTS_PREFIX,
+    catalog_cache,
+    invalidate_product_catalog,
+)
 from app.inventory.db import get_inventory_session
 from app.inventory.models import Ingredient, IngredientEntry, IngredientExit
 from app.inventory.schemas import (
@@ -46,19 +52,32 @@ def list_products(
     country: str | None = Query(default=None),
     session: Session = Depends(get_inventory_session),
 ) -> list[IngredientRead]:
+    # Chain-wide stock is the same for every signed-in operator. Key is the
+    # country filter only — never the Bearer user.
+    cache_key = f"{PRODUCTS_PREFIX}{(country or '*').strip().upper()}"
+    cached = catalog_cache.get(cache_key)
+    if isinstance(cached, list):
+        return [IngredientRead.model_validate(row) for row in cached]
+
     statement = select(Ingredient)
     if country:
         statement = statement.where(Ingredient.country == country.strip().upper())
     statement = statement.order_by(Ingredient.sku)
     rows = list(session.exec(statement).all())
     stocks = stock_by_ingredient_ids(session, [row.id for row in rows if row.id])
-    return [
+    payload = [
         IngredientRead(
             **IngredientPublic.model_validate(row).model_dump(),
             current_stock=stocks.get(row.id, 0.0),
         )
         for row in rows
     ]
+    catalog_cache.set(
+        cache_key,
+        [row.model_dump(mode="json") for row in payload],
+        CATALOG_TTL_SECONDS,
+    )
+    return payload
 
 
 @router.post("/products", response_model=IngredientRead, status_code=201)
@@ -78,6 +97,7 @@ def create_product(
     session.add(ingredient)
     session.commit()
     session.refresh(ingredient)
+    invalidate_product_catalog()
     return _ingredient_read(session, ingredient)
 
 
@@ -108,6 +128,7 @@ def create_inbound(
     session.add(entry)
     session.commit()
     session.refresh(entry)
+    invalidate_product_catalog()
     return InboundRead(
         **entry.model_dump(exclude={"ingredient"}),
         ingredient=IngredientPublic.model_validate(ingredient),
@@ -138,6 +159,7 @@ def create_outbound(
     session.add(exit_row)
     session.commit()
     session.refresh(exit_row)
+    invalidate_product_catalog()
     return OutboundRead(
         **exit_row.model_dump(exclude={"ingredient"}),
         ingredient=IngredientPublic.model_validate(ingredient),
