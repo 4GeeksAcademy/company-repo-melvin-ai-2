@@ -1,5 +1,15 @@
+import dynamic from "next/dynamic";
 import { BackofficeShell } from "@/components/BackofficeShell";
-import { OutboundExitForm } from "@/components/inventory/OutboundExitForm";
+
+const OutboundExitForm = dynamic(
+  () =>
+    import("@/components/inventory/OutboundExitForm").then(
+      (mod) => mod.OutboundExitForm,
+    ),
+  {
+    loading: () => <p role="status">Loading the consumption and waste form…</p>,
+  },
+);
 
 type PageProps = {
   searchParams: Promise<{ ingredient_id?: string }>;

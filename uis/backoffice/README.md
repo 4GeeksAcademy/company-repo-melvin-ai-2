@@ -44,6 +44,8 @@ Open `http://localhost:3101/suppliers` or `http://localhost:3101/backoffice/inve
 
 Lighthouse before/after for Overview: [`audit/AUDIT.md`](../../audit/AUDIT.md).
 
+Caching (lazy inventory forms, memoized Overview snapshot): [`CACHING_REPORT.md`](../../CACHING_REPORT.md).
+
 `.env.local` (gitignored) should include the lesson inventory origin, same FastAPI process as suppliers:
 
 ```text

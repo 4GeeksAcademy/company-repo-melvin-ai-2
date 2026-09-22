@@ -1,5 +1,15 @@
+import dynamic from "next/dynamic";
 import { BackofficeShell } from "@/components/BackofficeShell";
-import { InboundDeliveryForm } from "@/components/inventory/InboundDeliveryForm";
+
+const InboundDeliveryForm = dynamic(
+  () =>
+    import("@/components/inventory/InboundDeliveryForm").then(
+      (mod) => mod.InboundDeliveryForm,
+    ),
+  {
+    loading: () => <p role="status">Loading the delivery form…</p>,
+  },
+);
 
 type PageProps = {
   searchParams: Promise<{ ingredient_id?: string }>;

@@ -88,7 +88,7 @@ Ingredient stock is **computed** chain-wide (inbound − outbound per SKU, not p
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/inventory/products` | List ingredients with `current_stock` and `country` |
+| `GET` | `/inventory/products` | List ingredients with `current_stock` and `country` (60s TTL, cleared on delivery, exit, or new SKU) |
 | `POST` | `/inventory/products` | Create an ingredient (no stock field) |
 | `GET` | `/inventory/products/{id}` | One ingredient with derived stock |
 | `POST` | `/inventory/orders/inbound` | Log a supplier delivery (`IngredientEntry`) |
@@ -106,7 +106,7 @@ Reset links use `PUBLIC_APP_URL` (default `http://localhost:3101`) as `{PUBLIC_A
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/suppliers` | Create supplier |
-| `GET` | `/suppliers` | List; optional `?country=` / `?category=` |
+| `GET` | `/suppliers` | List; optional `?country=` / `?category=` (60s TTL, cleared when a supplier changes) |
 | `GET` | `/suppliers/{id}` | Get one |
 | `PATCH` | `/suppliers/{id}/rate` | Update rate + `updated_at` |
 | `PATCH` | `/suppliers/{id}/status` | Update status |

@@ -34,7 +34,11 @@ def isolated_auth_db(tmp_path, monkeypatch):
     monkeypatch.setattr("main.count_suppliers", lambda: 1)
     monkeypatch.setattr("main.seed_auth_if_empty", lambda: "skipped")
     monkeypatch.setattr("main.init_inventory_db", lambda: "skipped")
+    from app.cache import catalog_cache
+
+    catalog_cache.clear()
     yield tmp_path
+    catalog_cache.clear()
 
 
 @pytest.fixture
