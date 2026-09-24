@@ -1,9 +1,10 @@
 # Progress
 
 ## Current Milestone
-Brasaland serialization audit on `feature/serialization-audit`: explicit `response_model` on every FastAPI JSON endpoint, no hashed passwords or unauthenticated email echo, evidence in `docs/serialization-audit.md`.
+Brasaland telemetry plan on `feature/telemetry-plan_melvin-ai2`: catalogue, event envelope, and delivery strategy in `docs/telemetry/`. No instrumentation in this phase.
 
 ## Completed
+- Telemetry plan (2026-09-23): `docs/telemetry/telemetry-plan.md` and `docs/telemetry/event-schemas.json`. Six CONTEXT metrics plus additional auth, error, performance, and navigation events. Mandatory brief moved to `docs/telemetry/CONTEXT-company.md`.
 - Serialization audit (2026-09-18): `docs/serialization-audit.md`. Register no longer echoes email; `GET /users` is `UserListItem`; `/health` and seed have named models; incident analyze uses `IncidentAnalysisResponse`; inventory order list is a flat `ingredient_name`/`unit` projection. CSV export unchanged.
 - Lighthouse audit (2026-09-17): Dev after plus **production** `next start`: website home/brasa-points mobile **97** (LCP 2.36s / 2.40s), desktop **100**. Backoffice login **97 / 99**. Signed-in Overview Chrome: desktop **100** (LCP 0.4s), mobile **96** (LCP 1.2s). Evidence in `audit/production/` and `audit/REPORT.md`.
 - Ticket #infra-40: `uis/Dockerfile` + `uis/start.sh` (website **3000**, backoffice **3001**); `services/Dockerfile` (`uv pip install -r requirements.txt`, Uvicorn `--reload`); root `docker-compose.yml` on network `brasaland-dev`; env from root `.env` only; `INTERNAL_API_URL=http://backend:8000`. `.dockerignore` under `uis/` and `services/`.
