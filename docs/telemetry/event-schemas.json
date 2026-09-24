@@ -1,0 +1,414 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://brasaland.example/telemetry/event-schemas.json",
+  "title": "BrasalandTelemetryEvent",
+  "description": "One telemetry event. properties additionalProperties is false on every event_type.",
+  "oneOf": [
+    { "$ref": "#/definitions/inbound_order_created" },
+    { "$ref": "#/definitions/outbound_order_created" },
+    { "$ref": "#/definitions/stock_waste_registered" },
+    { "$ref": "#/definitions/stock_threshold_triggered" },
+    { "$ref": "#/definitions/direct_stock_edit_rejected" },
+    { "$ref": "#/definitions/ingredient_price_variance_detected" },
+    { "$ref": "#/definitions/inventory_order_validation_failed" },
+    { "$ref": "#/definitions/stock_threshold_edit_rejected" },
+    { "$ref": "#/definitions/auth_login_failed" },
+    { "$ref": "#/definitions/auth_login_succeeded" },
+    { "$ref": "#/definitions/auth_session_expired" },
+    { "$ref": "#/definitions/api_latency_recorded" },
+    { "$ref": "#/definitions/backoffice_page_viewed" },
+    { "$ref": "#/definitions/backoffice_flow_abandoned" },
+    { "$ref": "#/definitions/client_error_uncaught" }
+  ],
+  "definitions": {
+    "country": { "type": "string", "enum": ["CO", "US"] },
+    "currency": { "type": "string", "enum": ["COP", "USD"] },
+    "unit": { "type": "string", "enum": ["kg", "liter", "unit"] },
+    "product_category": {
+      "type": "string",
+      "enum": ["protein", "vegetable", "sauce", "beverage", "packaging", "cleaning"]
+    },
+    "location_id": { "type": "integer", "minimum": 1, "maximum": 14 },
+    "product_id": { "type": "integer", "minimum": 1 },
+    "envelope_without_properties": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventId",
+        "timestamp",
+        "sessionId",
+        "userId",
+        "event_type",
+        "schemaVersion",
+        "requestId",
+        "properties"
+      ],
+      "properties": {
+        "eventId": { "type": "string", "format": "uuid" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "sessionId": { "type": "string", "minLength": 1 },
+        "userId": { "type": ["string", "null"], "minLength": 1 },
+        "event_type": { "type": "string" },
+        "schemaVersion": { "const": "1.0.0" },
+        "requestId": { "type": "string", "minLength": 1 },
+        "properties": { "type": "object" }
+      }
+    },
+    "inventory_base": {
+      "type": "object",
+      "required": [
+        "location_id",
+        "country",
+        "product_id",
+        "product_category",
+        "quantity",
+        "unit",
+        "currency"
+      ],
+      "properties": {
+        "location_id": { "$ref": "#/definitions/location_id" },
+        "country": { "$ref": "#/definitions/country" },
+        "product_id": { "$ref": "#/definitions/product_id" },
+        "product_category": { "$ref": "#/definitions/product_category" },
+        "quantity": { "type": "number", "minimum": 0 },
+        "unit": { "$ref": "#/definitions/unit" },
+        "currency": { "$ref": "#/definitions/currency" }
+      }
+    },
+    "inbound_properties": {
+      "allOf": [{ "$ref": "#/definitions/inventory_base" }],
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["supplier_id", "unit_cost", "order_id"],
+      "properties": {
+        "supplier_id": { "type": "string", "minLength": 1 },
+        "unit_cost": { "type": "number", "minimum": 0 },
+        "order_id": { "type": "integer", "minimum": 1 },
+        "quantity": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "outbound_properties": {
+      "allOf": [{ "$ref": "#/definitions/inventory_base" }],
+      "unevaluatedProperties": false,
+      "required": ["reason", "order_id"],
+      "properties": {
+        "reason": { "const": "preparation" },
+        "order_id": { "type": "integer", "minimum": 1 },
+        "quantity": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "waste_properties": {
+      "allOf": [{ "$ref": "#/definitions/inventory_base" }],
+      "unevaluatedProperties": false,
+      "required": ["reason", "order_id"],
+      "properties": {
+        "reason": { "type": "string", "enum": ["expired", "kitchen_error", "theft_suspected"] },
+        "order_id": { "type": "integer", "minimum": 1 },
+        "quantity": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "threshold_properties": {
+      "allOf": [{ "$ref": "#/definitions/inventory_base" }],
+      "unevaluatedProperties": false,
+      "required": ["threshold_quantity", "triggering_order_id"],
+      "properties": {
+        "threshold_quantity": { "type": "number", "minimum": 0 },
+        "triggering_order_id": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "direct_edit_properties": {
+      "allOf": [{ "$ref": "#/definitions/inventory_base" }],
+      "unevaluatedProperties": false,
+      "required": ["rejection_code", "attempted_field"],
+      "properties": {
+        "rejection_code": { "const": "stock_not_directly_writable" },
+        "attempted_field": { "const": "current_stock" }
+      }
+    },
+    "price_variance_properties": {
+      "allOf": [{ "$ref": "#/definitions/inventory_base" }],
+      "unevaluatedProperties": false,
+      "required": [
+        "supplier_id",
+        "baseline_unit_cost",
+        "observed_unit_cost",
+        "variance_ratio",
+        "variance_threshold_ratio",
+        "order_id"
+      ],
+      "properties": {
+        "supplier_id": { "type": "string", "minLength": 1 },
+        "baseline_unit_cost": { "type": "number", "exclusiveMinimum": 0 },
+        "observed_unit_cost": { "type": "number", "minimum": 0 },
+        "variance_ratio": { "type": "number", "minimum": 0 },
+        "variance_threshold_ratio": { "const": 0.1 },
+        "order_id": { "type": "integer", "minimum": 1 },
+        "quantity": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "inbound_order_created": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "inbound_order_created" },
+            "properties": { "$ref": "#/definitions/inbound_properties" }
+          }
+        }
+      ]
+    },
+    "outbound_order_created": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "outbound_order_created" },
+            "properties": { "$ref": "#/definitions/outbound_properties" }
+          }
+        }
+      ]
+    },
+    "stock_waste_registered": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "stock_waste_registered" },
+            "properties": { "$ref": "#/definitions/waste_properties" }
+          }
+        }
+      ]
+    },
+    "stock_threshold_triggered": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "stock_threshold_triggered" },
+            "properties": { "$ref": "#/definitions/threshold_properties" }
+          }
+        }
+      ]
+    },
+    "direct_stock_edit_rejected": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "direct_stock_edit_rejected" },
+            "properties": { "$ref": "#/definitions/direct_edit_properties" }
+          }
+        }
+      ]
+    },
+    "ingredient_price_variance_detected": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "ingredient_price_variance_detected" },
+            "properties": { "$ref": "#/definitions/price_variance_properties" }
+          }
+        }
+      ]
+    },
+    "inventory_order_validation_failed": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "inventory_order_validation_failed" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["order_kind", "failure_code", "http_status"],
+              "properties": {
+                "order_kind": { "type": "string", "enum": ["inbound", "outbound"] },
+                "failure_code": {
+                  "type": "string",
+                  "enum": ["insufficient_stock", "invalid_reason", "invalid_body"]
+                },
+                "http_status": { "type": "integer", "enum": [400, 422] },
+                "location_id": { "$ref": "#/definitions/location_id" },
+                "product_id": { "$ref": "#/definitions/product_id" },
+                "quantity": { "type": "number", "minimum": 0 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "stock_threshold_edit_rejected": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "stock_threshold_edit_rejected" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "location_id",
+                "country",
+                "product_id",
+                "product_category",
+                "attempted_threshold",
+                "unit",
+                "currency",
+                "rejection_code"
+              ],
+              "properties": {
+                "location_id": { "$ref": "#/definitions/location_id" },
+                "country": { "$ref": "#/definitions/country" },
+                "product_id": { "$ref": "#/definitions/product_id" },
+                "product_category": { "$ref": "#/definitions/product_category" },
+                "attempted_threshold": { "type": "number", "minimum": 0 },
+                "unit": { "$ref": "#/definitions/unit" },
+                "currency": { "$ref": "#/definitions/currency" },
+                "rejection_code": { "const": "threshold_not_operator_writable" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "auth_login_failed": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "auth_login_failed" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["failure_code"],
+              "properties": {
+                "failure_code": { "const": "invalid_credentials" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "auth_login_succeeded": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "auth_login_succeeded" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["role"],
+              "properties": {
+                "role": { "type": "string", "enum": ["admin", "user"] }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "auth_session_expired": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "auth_session_expired" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["failure_code"],
+              "properties": {
+                "failure_code": { "const": "token_expired" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "api_latency_recorded": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "api_latency_recorded" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["route", "http_method", "http_status", "duration_ms"],
+              "properties": {
+                "route": { "type": "string", "minLength": 1 },
+                "http_method": {
+                  "type": "string",
+                  "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]
+                },
+                "http_status": { "type": "integer", "minimum": 100, "maximum": 599 },
+                "duration_ms": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "backoffice_page_viewed": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "backoffice_page_viewed" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["route"],
+              "properties": {
+                "route": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "backoffice_flow_abandoned": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "backoffice_flow_abandoned" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["flow_name", "last_step", "route"],
+              "properties": {
+                "flow_name": {
+                  "type": "string",
+                  "enum": ["inbound_delivery", "outbound_exit", "login"]
+                },
+                "last_step": { "type": "string", "minLength": 1 },
+                "route": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "client_error_uncaught": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "client_error_uncaught" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["error_name", "route"],
+              "properties": {
+                "error_name": { "type": "string", "minLength": 1 },
+                "route": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,9 +1,10 @@
 # Progress
 
 ## Current Milestone
-Brasaland caching on `feature/caching-optimisation`: lazy-load backoffice inventory forms, memoize the Overview snapshot, and TTL-cache shared catalog reads with write invalidation. Evidence in `CACHING_REPORT.md`.
+Brasaland telemetry plan on `feature/telemetry-plan_melvin-ai2`: catalogue, event envelope, and delivery strategy in `docs/telemetry/`. No instrumentation in this phase.
 
 ## Completed
+- Telemetry plan (2026-09-23): `docs/telemetry/telemetry-plan.md` and `docs/telemetry/event-schemas.json`. Six CONTEXT metrics plus additional auth, error, performance, and navigation events. Mandatory brief moved to `docs/telemetry/CONTEXT-company.md`.
 - Caching (2026-09-21): `CACHING_REPORT.md`. Backoffice inbound and outbound forms use `next/dynamic`. Overview `useMemo` wraps `getOperationsSnapshot()`. `GET /inventory/products` and `GET /suppliers` use a 60s in-memory TTL, cleared on writes. `/auth/me` is not cached.
 - Serialization audit (2026-09-18): `docs/serialization-audit.md`. Register no longer echoes email; `GET /users` is `UserListItem`; `/health` and seed have named models; incident analyze uses `IncidentAnalysisResponse`; inventory order list is a flat `ingredient_name`/`unit` projection. CSV export unchanged.
 - Lighthouse audit (2026-09-17): Dev after plus **production** `next start`: website home/brasa-points mobile **97** (LCP 2.36s / 2.40s), desktop **100**. Backoffice login **97 / 99**. Signed-in Overview Chrome: desktop **100** (LCP 0.4s), mobile **96** (LCP 1.2s). Evidence in `audit/production/` and `audit/REPORT.md`.
