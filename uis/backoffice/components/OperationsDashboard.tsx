@@ -1,3 +1,18 @@
+"use client";
+
+import { useMemo } from "react";
+import {
+  sampleLocations,
+  sampleMenuItems,
+  sampleSales,
+  sampleWasteRecords,
+} from "../../../src/data/sampleOperations";
+import type {
+  Location,
+  MenuItem,
+  SaleTransaction,
+  WasteRecord,
+} from "../../../src/types/models";
 import { getOperationsSnapshot } from "@/lib/operationsSnapshot";
 import { MetricCard } from "./MetricCard";
 
@@ -7,8 +22,23 @@ const usd = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
-export function OperationsDashboard() {
-  const snapshot = getOperationsSnapshot();
+type OperationsDashboardProps = {
+  sales?: SaleTransaction[];
+  locations?: Location[];
+  menuItems?: MenuItem[];
+  wasteRecords?: WasteRecord[];
+};
+
+export function OperationsDashboard({
+  sales = sampleSales,
+  locations = sampleLocations,
+  menuItems = sampleMenuItems,
+  wasteRecords = sampleWasteRecords,
+}: OperationsDashboardProps) {
+  const snapshot = useMemo(
+    () => getOperationsSnapshot(sales, locations, menuItems, wasteRecords),
+    [sales, locations, menuItems, wasteRecords],
+  );
 
   return (
     <>

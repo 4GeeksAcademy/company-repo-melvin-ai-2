@@ -118,6 +118,44 @@ def test_invalid_exit_reason_is_rejected(inventory_ready, lucia, lucia_token):
     assert "detail" in payload
 
 
+def test_product_list_skips_stock_math_until_outbound(
+    inventory_ready, lucia, lucia_token, monkeypatch
+):
+    from app.inventory.stock import stock_by_ingredient_ids
+
+    calls = {"n": 0}
+    real = stock_by_ingredient_ids
+
+    def counted(session, ids):
+        calls["n"] += 1
+        return real(session, ids)
+
+    monkeypatch.setattr("app.inventory.router.stock_by_ingredient_ids", counted)
+    client = inventory_ready
+    headers = bearer(lucia_token)
+    first = client.get("/inventory/products", headers=headers)
+    beef = next(row for row in first.json() if row["sku"] == "BRS-BEEF-001")
+    second = client.get("/inventory/products", headers=headers)
+    assert second.json() == first.json()
+    assert calls["n"] == 1
+
+    written = client.post(
+        "/inventory/orders/outbound",
+        headers=headers,
+        json={
+            "ingredient_id": beef["id"],
+            "quantity": 1,
+            "reason": "consumption",
+            "location_id": 1,
+        },
+    )
+    assert written.status_code == 201
+    third = client.get("/inventory/products", headers=headers).json()
+    again = next(row for row in third if row["sku"] == "BRS-BEEF-001")
+    assert again["current_stock"] == beef["current_stock"] - 1
+    assert calls["n"] == 2
+
+
 def test_list_products_country_filter(inventory_ready, lucia, lucia_token):
     client = inventory_ready
     payload = client.get(

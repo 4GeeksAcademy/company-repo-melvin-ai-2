@@ -4,7 +4,7 @@ import {
   sampleSales,
   sampleWasteRecords,
 } from "../../../src/data/sampleOperations";
-import type { Location, TopSellingItem } from "../../../src/types/models";
+import type { Location, MenuItem, SaleTransaction, TopSellingItem, WasteRecord } from "../../../src/types/models";
 import {
   calculateAverageTicket,
   calculateCountryComparison,
@@ -29,25 +29,26 @@ export type OperationsSnapshot = {
   topItems: TopSellingItem[];
 };
 
-export function getOperationsSnapshot(): OperationsSnapshot {
-  const averageTicket = calculateAverageTicket(sampleSales, "USD");
-  const wasteCost = sampleLocations.reduce(
+export function getOperationsSnapshot(
+  sales: SaleTransaction[] = sampleSales,
+  locations: Location[] = sampleLocations,
+  menuItems: MenuItem[] = sampleMenuItems,
+  wasteRecords: WasteRecord[] = sampleWasteRecords,
+): OperationsSnapshot {
+  const averageTicket = calculateAverageTicket(sales, "USD");
+  const wasteCost = locations.reduce(
     (total, location) =>
-      total + calculateWasteCost(sampleWasteRecords, location.id, "USD"),
+      total + calculateWasteCost(wasteRecords, location.id, "USD"),
     0,
   );
-  const comparison = calculateCountryComparison(
-    sampleSales,
-    sampleLocations,
-    sampleMenuItems,
-  );
+  const comparison = calculateCountryComparison(sales, locations, menuItems);
   const ranking = rankLocationsByPerformance(
-    sampleLocations,
-    sampleSales,
-    sampleWasteRecords,
-    sampleMenuItems,
+    locations,
+    sales,
+    wasteRecords,
+    menuItems,
   );
-  const topItems = findTopSellingItems(sampleSales, sampleMenuItems, 3);
+  const topItems = findTopSellingItems(sales, menuItems, 3);
   const totalRevenue =
     comparison.Colombia.totalRevenue.USD + comparison.USA.totalRevenue.USD;
 
@@ -55,16 +56,11 @@ export function getOperationsSnapshot(): OperationsSnapshot {
     averageTicket,
     wasteCost,
     totalRevenue,
-    saleCount: sampleSales.length,
+    saleCount: sales.length,
     locations: ranking.map(({ location, score }) => ({
       location,
       score,
-      margin: calculateLocationMargin(
-        sampleSales,
-        sampleMenuItems,
-        location.id,
-        "USD",
-      ),
+      margin: calculateLocationMargin(sales, menuItems, location.id, "USD"),
     })),
     topItems,
   };
