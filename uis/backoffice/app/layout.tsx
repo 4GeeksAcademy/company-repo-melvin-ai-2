@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { AuthRoot, SESSION_COOKIE } from "@repo/auth";
+import {
+  TelemetryErrorBoundary,
+  TelemetryRoot,
+} from "@/components/TelemetryRoot";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,7 +23,11 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthRoot hasSessionCookie={hasSessionCookie}>{children}</AuthRoot>
+        <TelemetryRoot>
+          <TelemetryErrorBoundary>
+            <AuthRoot hasSessionCookie={hasSessionCookie}>{children}</AuthRoot>
+          </TelemetryErrorBoundary>
+        </TelemetryRoot>
       </body>
     </html>
   );

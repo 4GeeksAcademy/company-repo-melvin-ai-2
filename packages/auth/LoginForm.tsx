@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CONNECTION_ERROR } from "./client";
 import { ErrorBanner } from "./ErrorBanner";
+import { emitAuthTelemetry, rememberTelemetryUser } from "./telemetrySink";
 import { useAuthApi } from "./useAuthApi";
 
 type LoginFormProps = {
@@ -13,7 +15,7 @@ type LoginFormProps = {
 
 export function LoginForm({ heading, homePath = "/" }: LoginFormProps) {
   const router = useRouter();
-  const { login } = useAuthApi();
+  const { login, loadMe } = useAuthApi();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -34,9 +36,17 @@ export function LoginForm({ heading, homePath = "/" }: LoginFormProps) {
     setError(null);
     try {
       await login(email, password);
+      const me = await loadMe();
+      rememberTelemetryUser(String(me.profile.user_id));
+      emitAuthTelemetry("auth_login_succeeded", { role: me.role });
       router.replace(homePath);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not log in.");
+      const message = err instanceof Error ? err.message : "Could not log in.";
+      emitAuthTelemetry("auth_login_failed", {
+        failure_code:
+          message === CONNECTION_ERROR ? "network_error" : "invalid_credentials",
+      });
+      setError(message);
     } finally {
       setBusy(false);
     }

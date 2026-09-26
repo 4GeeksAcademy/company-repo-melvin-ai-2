@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { authFetch, fieldErrorsFromApi, getBrasalandApiBase, parseApiError, brasalandFetch } from "./client";
 import { clearToken, setToken } from "./token";
+import { clearTelemetryUser, startTelemetrySession } from "./telemetrySink";
 import type { AuthMe, FieldErrors, TokenResponse } from "./types";
 
 export function useAuthApi() {
@@ -21,6 +22,7 @@ export function useAuthApi() {
     }
     const data = payload as TokenResponse;
     setToken(data.access_token);
+    startTelemetrySession();
   }, []);
 
   const register = useCallback(
@@ -74,6 +76,7 @@ export function useAuthApi() {
 
   const logout = useCallback(() => {
     clearToken();
+    clearTelemetryUser();
     router.replace("/login");
   }, [router]);
 

@@ -1,7 +1,7 @@
 # Progress
 
 ## Current Milestone
-Brasaland telemetry plan on `feature/telemetry-plan_melvin-ai2`: catalogue, event envelope, and delivery strategy in `docs/telemetry/`. No instrumentation in this phase.
+Brasaland frontend telemetry capture on `Frontend_capture_me-2`: stub `POST /telemetry/events`, backoffice `track()`, and instrumentation through that function only.
 
 ## Completed
 - Telemetry plan (2026-09-23): `docs/telemetry/telemetry-plan.md` and `docs/telemetry/event-schemas.json`. Six CONTEXT metrics plus additional auth, error, performance, and navigation events. Mandatory brief moved to `docs/telemetry/CONTEXT-company.md`.
@@ -31,6 +31,7 @@ Brasaland telemetry plan on `feature/telemetry-plan_melvin-ai2`: catalogue, even
 - Sprint 3 AUTH-03: forgot/reset/change-password API + `@repo/auth` forms and thin routes; reset tokens hashed in TinyDB (expiry + one-time); Resend wired behind `RESEND_API_KEY`.
 
 ## Verification
+- Frontend telemetry capture (2026-09-25): `uv run pytest services/api/tests/test_telemetry.py` — **1 passed**. `cd uis/backoffice && npx tsc --noEmit` passed. Stub `POST /telemetry/events` is mounted and returns `{received: N}` without auth. Backoffice `track()` batches, retries, and beacons. No DevTools Network click-through (no browser tool).
 - Caching (2026-09-22): `uv run pytest` — **54 passed**. `test_product_list_skips_stock_math_until_outbound` — **1 passed** (second product GET skips stock math; consumption write clears the cache and stock drops by 1). `cd uis/backoffice && npx tsc --noEmit` passed. ESLint on `OperationsDashboard.tsx` passed. `npm run build` passed. Production HTML on `:3199` with `brasaland_session=1`: Overview shows revenue, performance, and top sellers; inbound and outbound show their form headings; Overview does not include those headings. No browser click-through (no browser tool). Evidence in `CACHING_REPORT.md`.
 - Serialization audit (2026-09-18): `uv run pytest` — **51 passed**. Live `/docs` contracts: register 201 with no email; login token only; `/auth/me` returns email + profile; inventory orders are flat `ingredient_name`/`unit`. `cd uis/backoffice && npx tsc --noEmit` passed.
 - Lighthouse audit (2026-09-17): `cd packages/auth && npx jest --coverage` — 13 passed. `uis/website` lint + `tsc --noEmit` + `npm run build` (includes `/robots.txt`). `uis/backoffice` lint + `tsc --noEmit` + `npm run build` (includes `/`, `/login`, `/suppliers`, inventory). Evidence in `audit/AUDIT.md` and `audit/REPORT.md`. Backoffice after Chrome PNGs: desktop Performance 51→53, mobile 40→45.

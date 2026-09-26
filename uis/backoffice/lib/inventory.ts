@@ -8,12 +8,15 @@
 import {
   authFetch,
   AuthSessionError,
+  clearToken,
+  emitAuthTelemetry,
   getBrasalandApiBase,
   getToken,
   messageForHttpStatus,
   parseApiError,
 } from "@repo/auth";
-import { clearToken } from "@repo/auth";
+import { trackDirectStockEditRejected } from "@/lib/inventoryTelemetry";
+import { track } from "@/lib/telemetry";
 
 export type Ingredient = {
   id: number;
@@ -73,13 +76,31 @@ export function getInventoryApiBase(): string {
   );
 }
 
+function noteApiLatency(path: string, method: string, status: number, started: number): void {
+  track("api_latency_recorded", {
+    route: path,
+    http_method: method,
+    http_status: status,
+    duration_ms: Math.max(0, Math.round(performance.now() - started)),
+  });
+}
+
 async function inventoryFetch(
   path: string,
   options: RequestInit = {},
 ): Promise<Response> {
   const base = getInventoryApiBase();
+  const method = (options.method || "GET").toUpperCase();
+  const started = typeof performance !== "undefined" ? performance.now() : 0;
   if (base === getBrasalandApiBase()) {
-    return authFetch(path, options);
+    const response = await authFetch(path, options);
+    noteApiLatency(path, method, response.status, started);
+    if (response.status === 401) {
+      emitAuthTelemetry("auth_session_expired", {
+        failure_code: "token_expired",
+      });
+    }
+    return response;
   }
 
   const headers = new Headers(options.headers);
@@ -95,7 +116,10 @@ async function inventoryFetch(
     );
   }
 
+  noteApiLatency(path, method, response.status, started);
+
   if (response.status === 401) {
+    emitAuthTelemetry("auth_session_expired", { failure_code: "token_expired" });
     clearToken();
     if (typeof window !== "undefined") {
       window.location.assign("/login");
@@ -135,9 +159,31 @@ export async function getIngredient(id: number): Promise<Ingredient> {
   return (await response.json()) as Ingredient;
 }
 
+async function rejectDirectStockEdit(
+  body: InboundCreateInput | OutboundCreateInput,
+): Promise<void> {
+  if (!("current_stock" in body)) return;
+  const attempted = (body as { current_stock?: unknown }).current_stock;
+  try {
+    const ingredient = await getIngredient(body.ingredient_id);
+    trackDirectStockEditRejected(
+      ingredient,
+      body.location_id,
+      typeof attempted === "number" ? attempted : body.quantity,
+    );
+  } catch {
+    // The rejection still stands when the product lookup fails.
+  }
+  throw new InventoryApiError(
+    "Stock cannot be edited directly. Log a delivery or an exit.",
+    400,
+  );
+}
+
 export async function createInbound(
   body: InboundCreateInput,
-): Promise<unknown> {
+): Promise<{ id: number }> {
+  await rejectDirectStockEdit(body);
   const response = await inventoryFetch("/inventory/orders/inbound", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -149,7 +195,8 @@ export async function createInbound(
 
 export async function createOutbound(
   body: OutboundCreateInput,
-): Promise<unknown> {
+): Promise<{ id: number }> {
+  await rejectDirectStockEdit(body);
   const response = await inventoryFetch("/inventory/orders/outbound", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

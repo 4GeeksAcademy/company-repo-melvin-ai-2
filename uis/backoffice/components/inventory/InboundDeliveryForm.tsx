@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ErrorBanner } from "@repo/auth";
 import {
   createInbound,
+  getIngredient,
+  InventoryApiError,
   listIngredients,
   type Ingredient,
 } from "@/lib/inventory";
@@ -13,6 +15,12 @@ import {
   OTHER_SUPPLIER,
 } from "@/lib/inventoryLookups";
 import { InventoryNav } from "./InventoryNav";
+import {
+  inventoryProperties,
+  trackPriceVariance,
+  trackStockThreshold,
+} from "@/lib/inventoryTelemetry";
+import { track } from "@/lib/telemetry";
 
 type InboundDeliveryFormProps = {
   initialIngredientId?: number;
@@ -26,6 +34,7 @@ export function InboundDeliveryForm({
     initialIngredientId ? String(initialIngredientId) : "",
   );
   const [quantity, setQuantity] = useState("");
+  const [unitCost, setUnitCost] = useState("");
   const [supplierChoice, setSupplierChoice] = useState<string>(
     DELIVERY_SUPPLIERS[0],
   );
@@ -37,6 +46,9 @@ export function InboundDeliveryForm({
   const [actionError, setActionError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const submitted = useRef(false);
+  const draft = useRef({ ingredientId: "", quantity: "" });
+  draft.current = { ingredientId, quantity };
 
   const loadIngredients = useCallback(async () => {
     setLoading(true);
@@ -54,6 +66,19 @@ export function InboundDeliveryForm({
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (submitted.current) return;
+      const current = draft.current;
+      if (!current.ingredientId && !current.quantity) return;
+      track("backoffice_flow_abandoned", {
+        flow_name: "inbound_delivery",
+        last_step: current.ingredientId ? "quantity" : "ingredient",
+        route: "/backoffice/inventory/orders/inbound",
+      });
+    };
   }, []);
 
   useEffect(() => {
@@ -97,22 +122,56 @@ export function InboundDeliveryForm({
       return;
     }
 
+    const cost = Number(unitCost);
+    if (!Number.isFinite(cost) || cost < 0) {
+      setFieldError("Enter the unit cost in the kitchen's currency.");
+      setBusy(false);
+      return;
+    }
+    const ingredient = ingredients.find((row) => row.id === selectedId);
+    if (!ingredient) {
+      setFieldError("Choose an ingredient by name.");
+      setBusy(false);
+      return;
+    }
+    const siteId = Number(locationId);
+
     try {
-      await createInbound({
+      const created = await createInbound({
         ingredient_id: selectedId,
         quantity: qty,
         supplier_name,
-        location_id: Number(locationId),
+        location_id: siteId,
       });
-      const name =
-        ingredients.find((row) => row.id === selectedId)?.name ?? "ingredient";
+      submitted.current = true;
+      track("inbound_order_created", {
+        ...inventoryProperties(ingredient, siteId, qty),
+        supplier_id: "unmatched",
+        unit_cost: cost,
+        order_id: created.id,
+      });
+      trackPriceVariance(ingredient, siteId, qty, "unmatched", cost, created.id);
+      const refreshed = await getIngredient(selectedId);
+      trackStockThreshold(refreshed, siteId, created.id);
+      const name = ingredient.name;
       setIngredientId("");
       setQuantity("");
+      setUnitCost("");
       setSupplierChoice(DELIVERY_SUPPLIERS[0]);
       setOtherSupplier("");
       setLocationId("1");
       setSuccess(`Logged a delivery of ${qty} for ${name}.`);
     } catch (err) {
+      if (err instanceof InventoryApiError && (err.status === 400 || err.status === 422)) {
+        track("inventory_order_validation_failed", {
+          order_kind: "inbound",
+          failure_code: err.status === 422 ? "invalid_body" : "insufficient_stock",
+          http_status: err.status,
+          location_id: siteId,
+          product_id: selectedId,
+          quantity: qty,
+        });
+      }
       setActionError(
         err instanceof Error
           ? err.message
@@ -193,6 +252,17 @@ export function InboundDeliveryForm({
                 required
                 value={quantity}
                 onChange={(event) => setQuantity(event.target.value)}
+              />
+            </label>
+            <label>
+              Unit cost ({selected?.country === "US" ? "USD" : "COP"})
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                value={unitCost}
+                onChange={(event) => setUnitCost(event.target.value)}
               />
             </label>
             <label>

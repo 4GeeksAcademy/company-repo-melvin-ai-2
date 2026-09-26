@@ -10,6 +10,7 @@ import {
   parseApiError,
 } from "./client";
 import { canPaintProtectedView } from "./sessionPaint";
+import { emitAuthTelemetry } from "./telemetrySink";
 import { clearToken, getToken, hasToken } from "./token";
 
 export function useProtectedSession(hasSessionCookie = false) {
@@ -34,6 +35,9 @@ export function useProtectedSession(hasSessionCookie = false) {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       if (response.status === 401) {
+        emitAuthTelemetry("auth_session_expired", {
+          failure_code: "token_expired",
+        });
         clearToken();
         setReady(false);
         router.replace("/login");

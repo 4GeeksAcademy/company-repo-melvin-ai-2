@@ -19,4 +19,13 @@ export { getToken, setToken, clearToken, hasToken, SESSION_COOKIE } from "./toke
 export { useAuthApi } from "./useAuthApi";
 export { useProtectedSession } from "./useProtectedSession";
 export { canPaintProtectedView } from "./sessionPaint";
+export {
+  setAuthTelemetry,
+  emitAuthTelemetry,
+  startTelemetrySession,
+  readTelemetrySession,
+  readTelemetryUser,
+  rememberTelemetryUser,
+  clearTelemetryUser,
+} from "./telemetrySink";
 export type { AuthMe, Profile, UserRole, TokenResponse, FieldErrors } from "./types";

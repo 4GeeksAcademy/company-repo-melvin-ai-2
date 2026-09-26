@@ -68,6 +68,7 @@ At least three categories: inventory, authentication, errors, performance, navig
 | `backoffice_page_viewed` | navigation | identified | which backoffice sections operators open | which screens are still black boxes |
 | `backoffice_flow_abandoned` | navigation | identified | which delivery or waste flows stop before submit | which form to shorten |
 | `client_error_uncaught` | errors | identified | which routes throw in the browser | which page to patch before trusting its counts |
+| `page_vital_recorded` | performance | identified | whether a backoffice route is slow to paint (LCP, CLS, INP, FCP, or TTFB) | which screen to fix before a Friday service |
 
 ## Phase 2 — Schemas
 
@@ -162,7 +163,7 @@ Emit when `abs(observed - baseline) / baseline > 0.10` for the same `product_id`
 
 `stock_threshold_edit_rejected`: required `location_id`, `country`, `product_id`, `product_category`, `attempted_threshold` (number ≥ 0), `unit`, `currency`, `rejection_code` const `threshold_not_operator_writable`.
 
-`auth_login_failed`: required `failure_code` const `invalid_credentials`. One code covers a bad password and an unknown address, so the event does not reveal which emails exist. No attempted email.
+`auth_login_failed`: required `failure_code` (`invalid_credentials` or `network_error`). `invalid_credentials` covers a bad password and an unknown address, so the event does not reveal which emails exist. No attempted email.
 
 `auth_login_succeeded`: required `role` (`admin` or `user`). No email.
 
@@ -175,6 +176,8 @@ Emit when `abs(observed - baseline) / baseline > 0.10` for the same `product_id`
 `backoffice_flow_abandoned`: required `flow_name` (`inbound_delivery`, `outbound_exit`, `login`), `last_step` (string token, not typed text), `route`.
 
 `client_error_uncaught`: required `error_name` (exception name only), `route`. No message and no stack. Messages can contain what the operator typed.
+
+`page_vital_recorded`: required `route` (template only), `vital_name` (`LCP`, `CLS`, `INP`, `FCP`, or `TTFB`), `vital_value` (number). No navigation timing dump.
 
 ## Phase 3 — Delivery
 
@@ -195,6 +198,7 @@ Stream means the event is available for a decision the same service period. Batc
 | `auth_login_succeeded` | batch (daily) | Session counts explain failure spikes after the day closes. |
 | `auth_session_expired` | batch (daily) | Token lifetime is a weekly product decision. |
 | `api_latency_recorded` | batch (daily aggregate) | The decision is which route was slow today, not a page per request. |
+| `page_vital_recorded` | batch (daily) | A slow paint is a release decision, not an interrupt during service. Capture is throttled by the browser's vital callback. |
 | `backoffice_page_viewed` | batch (daily) | Black-box screens show up in a daily visit count. |
 | `backoffice_flow_abandoned` | batch (daily) | Form changes ship in a release, not mid-service. |
 
@@ -220,7 +224,7 @@ Considered and discarded:
 - A successful `stock_edited` event. Stock is never written directly. Emitting a success event would contradict the traceability rule.
 - Mapping today’s single reason `waste` onto `expired` by default. That would send Felipe to audit the wrong cause.
 
-Known gap the instrumenter must not paper over: live stock is one chain-wide number, and live waste has no `expired` / `kitchen_error` / `theft_suspected` split. Threshold and waste events wait until location stock and the three reasons exist. Until then, still emit `outbound_order_created` for `consumption`, `inbound_order_created`, validation failures, and `direct_stock_edit_rejected`.
+Known gap the instrumenter must not paper over: live stock is one chain-wide number, and the live outbound API still stores only `consumption` or `waste`. Capture still emits every mandatory event. `stock_threshold_triggered` uses the same minimum as the low-stock badge (10) and the refreshed chain-wide `current_stock`. The exit form collects `expired`, `kitchen_error`, and `theft_suspected` for `stock_waste_registered` only. The API body stays `waste`. `outbound_order_created` uses reason `preparation` when the operator chose consumption.
 
 ## What the next developer changes
 
