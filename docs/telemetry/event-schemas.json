@@ -18,7 +18,8 @@
     { "$ref": "#/definitions/api_latency_recorded" },
     { "$ref": "#/definitions/backoffice_page_viewed" },
     { "$ref": "#/definitions/backoffice_flow_abandoned" },
-    { "$ref": "#/definitions/client_error_uncaught" }
+    { "$ref": "#/definitions/client_error_uncaught" },
+    { "$ref": "#/definitions/page_vital_recorded" }
   ],
   "definitions": {
     "country": { "type": "string", "enum": ["CO", "US"] },
@@ -283,7 +284,10 @@
               "additionalProperties": false,
               "required": ["failure_code"],
               "properties": {
-                "failure_code": { "const": "invalid_credentials" }
+                "failure_code": {
+                  "type": "string",
+                  "enum": ["invalid_credentials", "network_error"]
+                }
               }
             }
           }
@@ -385,6 +389,29 @@
                 },
                 "last_step": { "type": "string", "minLength": 1 },
                 "route": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "page_vital_recorded": {
+      "allOf": [
+        { "$ref": "#/definitions/envelope_without_properties" },
+        {
+          "properties": {
+            "event_type": { "const": "page_vital_recorded" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["route", "vital_name", "vital_value"],
+              "properties": {
+                "route": { "type": "string", "minLength": 1 },
+                "vital_name": {
+                  "type": "string",
+                  "enum": ["LCP", "CLS", "INP", "FCP", "TTFB"]
+                },
+                "vital_value": { "type": "number" }
               }
             }
           }

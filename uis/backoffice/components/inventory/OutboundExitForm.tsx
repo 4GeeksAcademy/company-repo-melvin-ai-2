@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ErrorBanner } from "@repo/auth";
 import {
   createOutbound,
@@ -11,6 +11,11 @@ import {
 } from "@/lib/inventory";
 import { BRASALAND_LOCATIONS, formatQuantity } from "@/lib/inventoryLookups";
 import { InventoryNav } from "./InventoryNav";
+import {
+  inventoryProperties,
+  trackStockThreshold,
+} from "@/lib/inventoryTelemetry";
+import { track } from "@/lib/telemetry";
 
 type OutboundExitFormProps = {
   initialIngredientId?: number;
@@ -25,7 +30,9 @@ export function OutboundExitForm({
   );
   const [liveIngredient, setLiveIngredient] = useState<Ingredient | null>(null);
   const [quantity, setQuantity] = useState("");
-  const [reason, setReason] = useState<"consumption" | "waste">("consumption");
+  const [reason, setReason] = useState<
+    "consumption" | "expired" | "kitchen_error" | "theft_suspected"
+  >("consumption");
   const [locationId, setLocationId] = useState("1");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -33,6 +40,9 @@ export function OutboundExitForm({
   const [actionError, setActionError] = useState<string | null>(null);
   const [quantityError, setQuantityError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const submitted = useRef(false);
+  const draft = useRef({ ingredientId: "", quantity: "" });
+  draft.current = { ingredientId, quantity };
 
   const loadIngredients = useCallback(async () => {
     setLoading(true);
@@ -50,6 +60,19 @@ export function OutboundExitForm({
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (submitted.current) return;
+      const current = draft.current;
+      if (!current.ingredientId && !current.quantity) return;
+      track("backoffice_flow_abandoned", {
+        flow_name: "outbound_exit",
+        last_step: current.quantity ? "reason" : "ingredient",
+        route: "/backoffice/inventory/orders/outbound",
+      });
+    };
   }, []);
 
   useEffect(() => {
@@ -114,23 +137,56 @@ export function OutboundExitForm({
       return;
     }
 
+    if (!selected) {
+      setQuantityError("Choose an ingredient by name.");
+      setBusy(false);
+      return;
+    }
+    const siteId = Number(locationId);
+    const apiReason = reason === "consumption" ? "consumption" : "waste";
+
     try {
-      await createOutbound({
+      const created = await createOutbound({
         ingredient_id: selectedId,
         quantity: qty,
-        reason,
-        location_id: Number(locationId),
+        reason: apiReason,
+        location_id: siteId,
       });
-      const name = selected?.name ?? "ingredient";
-      setQuantity("");
-      setSuccess(`Logged ${reason} of ${qty} for ${name}.`);
+      submitted.current = true;
+      if (reason === "consumption") {
+        track("outbound_order_created", {
+          ...inventoryProperties(selected, siteId, qty),
+          reason: "preparation",
+          order_id: created.id,
+        });
+      } else {
+        track("stock_waste_registered", {
+          ...inventoryProperties(selected, siteId, qty),
+          reason,
+          order_id: created.id,
+        });
+      }
       const refreshed = await getIngredient(selectedId);
       setLiveIngredient(refreshed);
+      trackStockThreshold(refreshed, siteId, created.id);
+      const name = selected.name;
+      setQuantity("");
+      setSuccess(`Logged ${reason} of ${qty} for ${name}.`);
     } catch (err) {
       const message =
         err instanceof Error
           ? err.message
           : "Could not log that exit. Try again.";
+      if (err instanceof InventoryApiError && (err.status === 400 || err.status === 422)) {
+        track("inventory_order_validation_failed", {
+          order_kind: "outbound",
+          failure_code: err.status === 422 ? "invalid_reason" : "insufficient_stock",
+          http_status: err.status,
+          location_id: siteId,
+          product_id: selectedId,
+          quantity: qty,
+        });
+      }
       if (err instanceof InventoryApiError && err.status === 400) {
         setQuantityError(message);
       } else {
@@ -245,11 +301,19 @@ export function OutboundExitForm({
               <select
                 value={reason}
                 onChange={(event) =>
-                  setReason(event.target.value as "consumption" | "waste")
+                  setReason(
+                    event.target.value as
+                      | "consumption"
+                      | "expired"
+                      | "kitchen_error"
+                      | "theft_suspected",
+                  )
                 }
               >
                 <option value="consumption">Consumption</option>
-                <option value="waste">Waste</option>
+                <option value="expired">Waste — expired</option>
+                <option value="kitchen_error">Waste — kitchen error</option>
+                <option value="theft_suspected">Waste — suspected theft</option>
               </select>
             </label>
             <label>
