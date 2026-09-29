@@ -24,5 +24,13 @@ class TelemetryBatch(BaseModel):
     events: list[TelemetryEvent]
 
 
+class TelemetryIngest(BaseModel):
+    """Loose batch. Items are validated one by one inside the handler."""
+
+    events: list[Any]
+
+
 class TelemetryReceived(BaseModel):
     received: int
+    stored: int
+    rejected: int

@@ -22,6 +22,7 @@ from app.public_schemas import HealthResponse
 from app.routers.incidents import router as incidents_router
 from app.routers.inventory import router as inventory_router
 from app.telemetry.router import router as telemetry_router
+from app.telemetry.store import ensure_telemetry_table
 from app.users.router import router as users_router
 from database import count_suppliers, init_inventory_db
 from routes.suppliers import router as suppliers_router
@@ -50,6 +51,14 @@ async def lifespan(_app: FastAPI):
             logger.exception("Inventory startup failed")
             print(
                 "Startup inventory failed. Check DATABASE_URL and try again.",
+                file=sys.stderr,
+            )
+        try:
+            ensure_telemetry_table()
+        except Exception:
+            logger.exception("Telemetry table startup failed")
+            print(
+                "Telemetry table startup failed. Check DATABASE_URL and try again.",
                 file=sys.stderr,
             )
     except PersistenceError:
