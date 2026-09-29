@@ -1,4 +1,4 @@
-"""Temporary ingest. Validates the envelope and does not store events."""
+"""Persist telemetry batches. The public URL stays /telemetry/events."""
 
 from __future__ import annotations
 
@@ -6,28 +6,63 @@ import logging
 import os
 
 from fastapi import APIRouter
+from pydantic import ValidationError
 
-from app.telemetry.schemas import TelemetryBatch, TelemetryReceived
+from app.telemetry.schemas import TelemetryEvent, TelemetryIngest, TelemetryReceived
+from app.telemetry.store import (
+    SERVICE_NAME,
+    insert_batch,
+    parse_timestamp,
+    tags_for,
+)
 
 logger = logging.getLogger("brasaland.telemetry")
 
+
 def telemetry_endpoint() -> str:
-    """Read on each request so the stub can move to storage without a frontend change."""
+    """Read on each request so storage can move without a frontend change."""
     return os.environ.get(
         "TELEMETRY_ENDPOINT", "http://localhost:8000/telemetry/events"
     )
+
 
 router = APIRouter(prefix="/telemetry", tags=["telemetry"])
 
 
 @router.post("/events", response_model=TelemetryReceived)
-def receive_events(batch: TelemetryBatch) -> TelemetryReceived:
-    count = len(batch.events)
-    kinds = [event.event_type for event in batch.events]
+def receive_events(batch: TelemetryIngest) -> TelemetryReceived:
+    received = len(batch.events)
+    rows: list[dict] = []
+    rejected = 0
+    for raw in batch.events:
+        if not isinstance(raw, dict):
+            rejected += 1
+            continue
+        try:
+            event = TelemetryEvent.model_validate(raw)
+            timestamp = parse_timestamp(event.timestamp)
+        except (ValidationError, ValueError):
+            rejected += 1
+            continue
+        rows.append(
+            {
+                "event_id": event.eventId,
+                "timestamp": timestamp,
+                "session_id": event.sessionId,
+                "user_id": event.userId,
+                "event_type": event.event_type,
+                "service": SERVICE_NAME,
+                "request_id": event.requestId,
+                "tags": tags_for(event.event_type, event.properties),
+            }
+        )
+    stored = insert_batch(rows)
+    rejected += len(rows) - stored
     logger.info(
-        "telemetry stub received %s events types=%s endpoint=%s",
-        count,
-        kinds,
+        "telemetry stored %s rejected %s of %s endpoint=%s",
+        stored,
+        rejected,
+        received,
         telemetry_endpoint(),
     )
-    return TelemetryReceived(received=count)
+    return TelemetryReceived(received=received, stored=stored, rejected=rejected)

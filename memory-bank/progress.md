@@ -1,7 +1,7 @@
 # Progress
 
 ## Current Milestone
-Brasaland frontend telemetry capture on `Frontend_capture_me-2`: stub `POST /telemetry/events`, backoffice `track()`, and instrumentation through that function only.
+Brasaland telemetry storage on `feature/telemetry-storage_melvin-ai2`: `telemetry_events` in Supabase and a bulk `POST /telemetry/events` that stores valid events and counts rejections. The backoffice client is unchanged.
 
 ## Completed
 - Telemetry plan (2026-09-23): `docs/telemetry/telemetry-plan.md` and `docs/telemetry/event-schemas.json`. Six CONTEXT metrics plus additional auth, error, performance, and navigation events. Mandatory brief moved to `docs/telemetry/CONTEXT-company.md`.
@@ -31,6 +31,7 @@ Brasaland frontend telemetry capture on `Frontend_capture_me-2`: stub `POST /tel
 - Sprint 3 AUTH-03: forgot/reset/change-password API + `@repo/auth` forms and thin routes; reset tokens hashed in TinyDB (expiry + one-time); Resend wired behind `RESEND_API_KEY`.
 
 ## Verification
+- Telemetry storage (2026-09-28): `uv run pytest services/api/tests/test_telemetry.py` — **2 passed**. Supabase `telemetry_events` has the eight columns, timestamp and event_type indexes, a GIN index on `tags`, and update/delete triggers that reject writes. Frontend files were not changed. Live API restart stored a batch of 5 (`stored` 5) and a mixed batch `{"received":2,"stored":1,"rejected":1}`. Table has inbound order 6, outbound order 5, page views, Web Vitals, and `auth_login_failed`.
 - Frontend telemetry capture (2026-09-25): `uv run pytest services/api/tests/test_telemetry.py` — **1 passed**. `cd uis/backoffice && npx tsc --noEmit` passed. Stub `POST /telemetry/events` is mounted and returns `{received: N}` without auth. Backoffice `track()` batches, retries, and beacons. No DevTools Network click-through (no browser tool).
 - Caching (2026-09-22): `uv run pytest` — **54 passed**. `test_product_list_skips_stock_math_until_outbound` — **1 passed** (second product GET skips stock math; consumption write clears the cache and stock drops by 1). `cd uis/backoffice && npx tsc --noEmit` passed. ESLint on `OperationsDashboard.tsx` passed. `npm run build` passed. Production HTML on `:3199` with `brasaland_session=1`: Overview shows revenue, performance, and top sellers; inbound and outbound show their form headings; Overview does not include those headings. No browser click-through (no browser tool). Evidence in `CACHING_REPORT.md`.
 - Serialization audit (2026-09-18): `uv run pytest` — **51 passed**. Live `/docs` contracts: register 201 with no email; login token only; `/auth/me` returns email + profile; inventory orders are flat `ingredient_name`/`unit`. `cd uis/backoffice && npx tsc --noEmit` passed.
