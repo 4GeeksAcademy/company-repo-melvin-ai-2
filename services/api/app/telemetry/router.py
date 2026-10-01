@@ -5,9 +5,10 @@ from __future__ import annotations
 import logging
 import os
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import ValidationError
 
+from app.telemetry.report import ReportWindowError, report_for
 from app.telemetry.schemas import TelemetryEvent, TelemetryIngest, TelemetryReceived
 from app.telemetry.store import (
     SERVICE_NAME,
@@ -27,6 +28,18 @@ def telemetry_endpoint() -> str:
 
 
 router = APIRouter(prefix="/telemetry", tags=["telemetry"])
+
+
+@router.get("/report")
+def read_report(
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> dict:
+    """Operational report. Same date pair is served from memory for 60 seconds."""
+    try:
+        return report_for(start_date, end_date)
+    except ReportWindowError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/events", response_model=TelemetryReceived)

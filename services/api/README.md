@@ -101,6 +101,10 @@ Demo against Supabase: `uv run uvicorn main:app --reload --port 8000`, open `/do
 
 Reset links use `PUBLIC_APP_URL` (default `http://localhost:3101`) as `{PUBLIC_APP_URL}/reset-password?token=...`. The same path exists on incident web (`:3102`) and talent tracker (`:3000`) if you change the origin.
 
+## Telemetry report
+
+`POST /telemetry/events` stores batches. `GET /telemetry/report` is public and returns operational metrics for the engineering team: events per day, error rate by event type, login failure rate, and mean `api_latency_recorded` latency by route. Optional `start_date` and `end_date` are ISO 8601; omitted bounds use the last 7 days in UTC. The same query pair is cached in memory for 60 seconds. Metric functions live in `services/telemetry/analysis.py`. The backoffice page is `uis/backoffice` `/telemetry`.
+
 ## Supplier endpoints
 
 | Method | Path | Description |
