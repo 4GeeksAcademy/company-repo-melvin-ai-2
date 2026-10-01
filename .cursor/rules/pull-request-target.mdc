@@ -1,0 +1,16 @@
+---
+description: Pull requests go to the Brasaland company repo, never milestone-0
+alwaysApply: true
+---
+
+# Pull request target
+
+- Open pull requests on `4GeeksAcademy/company-repo-melvin-ai-2` with base `main`.
+- `origin` is already `https://github.com/4GeeksAcademy/company-repo-melvin-ai-2.git`. Push with `git push -u origin HEAD`.
+- Do not open or push a pull request to `Mewell9/milestone-0`.
+- Do not add another remote for submission.
+
+```bash
+git push -u origin HEAD
+gh pr create --repo 4GeeksAcademy/company-repo-melvin-ai-2 --base main
+```

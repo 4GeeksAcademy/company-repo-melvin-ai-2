@@ -4,6 +4,7 @@
 Brasaland telemetry technical report on `company_telemetry-techreportphase4-melvin-ai2`: Pandas metrics in `services/telemetry/analysis.py` and `GET /telemetry/report` (volume, error rate, login failures, route latency) with a 60-second cache. The backoffice page is `/telemetry`.
 
 ## Completed
+- Pull request target (2026-10-01): `.cursor/rules/pull-request-target.mdc`. Pull requests go to `4GeeksAcademy/company-repo-melvin-ai-2` base `main`. `Mewell9/milestone-0` is not a submission target.
 - Telemetry plan (2026-09-23): `docs/telemetry/telemetry-plan.md` and `docs/telemetry/event-schemas.json`. Six CONTEXT metrics plus additional auth, error, performance, and navigation events. Mandatory brief moved to `docs/telemetry/CONTEXT-company.md`.
 - Caching (2026-09-21): `CACHING_REPORT.md`. Backoffice inbound and outbound forms use `next/dynamic`. Overview `useMemo` wraps `getOperationsSnapshot()`. `GET /inventory/products` and `GET /suppliers` use a 60s in-memory TTL, cleared on writes. `/auth/me` is not cached.
 - Serialization audit (2026-09-18): `docs/serialization-audit.md`. Register no longer echoes email; `GET /users` is `UserListItem`; `/health` and seed have named models; incident analyze uses `IncidentAnalysisResponse`; inventory order list is a flat `ingredient_name`/`unit` projection. CSV export unchanged.
