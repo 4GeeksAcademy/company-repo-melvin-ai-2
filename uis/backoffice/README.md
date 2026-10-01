@@ -18,6 +18,7 @@ uis/backoffice/
 - **Overview** (`/`) — operations metrics from monorepo root `src/`
 - **Suppliers** (`/suppliers`) — Lucía’s supplier directory (FastAPI + TinyDB)
 - **Inventory** (`/backoffice/inventory/...`) — ingredients, deliveries, consumption/waste, order history (FastAPI + Supabase)
+- **Telemetry** (`/telemetry`) — operational report from `GET /telemetry/report` (volume, errors, login failures, route latency)
 
 CONTEXT: [`memory-bank/supplier-directory.md`](../../memory-bank/supplier-directory.md), [`memory-bank/inventory-ui.md`](../../memory-bank/inventory-ui.md)
 

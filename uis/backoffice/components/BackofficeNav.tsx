@@ -33,6 +33,13 @@ export function BackofficeNav() {
       >
         <span aria-hidden="true">▤</span> Inventory
       </Link>
+      <Link
+        className={pathname?.startsWith("/telemetry") ? "active" : undefined}
+        href="/telemetry"
+        aria-current={pathname?.startsWith("/telemetry") ? "page" : undefined}
+      >
+        <span aria-hidden="true">◌</span> Telemetry
+      </Link>
       <Link href="/#locations">
         <span aria-hidden="true">⌖</span> Locations
       </Link>
