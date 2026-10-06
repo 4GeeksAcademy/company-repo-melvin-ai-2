@@ -101,11 +101,12 @@
     "waste_properties": {
       "allOf": [{ "$ref": "#/definitions/inventory_base" }],
       "unevaluatedProperties": false,
-      "required": ["reason", "order_id"],
+      "required": ["reason", "order_id", "unit_cost"],
       "properties": {
         "reason": { "type": "string", "enum": ["expired", "kitchen_error", "theft_suspected"] },
         "order_id": { "type": "integer", "minimum": 1 },
-        "quantity": { "type": "number", "exclusiveMinimum": 0 }
+        "quantity": { "type": "number", "exclusiveMinimum": 0 },
+        "unit_cost": { "type": "number", "minimum": 0 }
       }
     },
     "threshold_properties": {
