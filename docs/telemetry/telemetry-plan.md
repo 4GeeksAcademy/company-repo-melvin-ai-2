@@ -120,6 +120,7 @@ Committed waste. `reason` is required and is only `expired`, `kitchen_error`, or
 | shared inventory fields | | yes | `quantity` is the quantity lost |
 | `reason` | enum of those three | yes | Do not emit `waste`. |
 | `order_id` | integer | yes | `IngredientExit.id` |
+| `unit_cost` | number ≥ 0 | yes | Unit cost in `currency`. Added so Waste Cost per Location can be summed. Rows captured before this field exist are omitted from that sum. |
 
 ### `stock_threshold_triggered`
 
