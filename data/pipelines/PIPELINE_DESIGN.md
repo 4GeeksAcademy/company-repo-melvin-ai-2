@@ -1,6 +1,6 @@
 # Weekly Location Cost & Waste Report
 
-Design for Mariana's weekly business report. No orchestration code in this milestone. `services/telemetry/analysis.py` and `GET /telemetry/report` stay as they are. This pipeline reads `telemetry_events` and writes `reporting.weekly_location_performance`.
+Design for Mariana's weekly business report. The runnable entry is `data/pipelines/pipeline.py`. `services/telemetry/analysis.py` and `GET /telemetry/report` stay as they are. This pipeline reads `telemetry_events` and writes `reporting.weekly_location_performance`.
 
 The business brief is [`docs/pipelines/CONTEXT-company.md`](../../docs/pipelines/CONTEXT-company.md). The mandatory events are the ones in [`docs/telemetry/CONTEXT-company.md`](../../docs/telemetry/CONTEXT-company.md).
 
@@ -36,6 +36,18 @@ Mariana (CEO) and Felipe (Operations Director) still cannot see, for each of the
 ## Purpose
 
 This pipeline produces Mariana's Weekly Location Cost & Waste Report every Monday: Purchase Cost per Location, Waste Cost per Location, Waste Ratio, Stockout Frequency, and Price Alert Frequency, computed from `inbound_order_created`, `stock_waste_registered`, `stock_threshold_triggered`, and `ingredient_price_variance_detected`.
+
+## Run
+
+Monday 11:00 UTC (06:00 Colombia, 07:00 Florida). The run recomputes the ISO week that just ended.
+
+From the repo root, with the API environment (Prefect is installed there):
+
+```bash
+services/api/.venv/bin/python data/pipelines/pipeline.py
+```
+
+That is the entry point behind `python data/pipelines/pipeline.py`. An optional `YYYY-MM-DD` argument recomputes that week instead of the week that just ended. The same run is what `POST /reporting/pipeline-runs` starts.
 
 ## Extraction format
 

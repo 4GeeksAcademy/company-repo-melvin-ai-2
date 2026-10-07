@@ -7,6 +7,7 @@ import sys
 import time
 from contextlib import asynccontextmanager
 from json import JSONDecodeError
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -27,6 +28,11 @@ from app.users.router import router as users_router
 from database import count_suppliers, init_inventory_db
 from routes.suppliers import router as suppliers_router
 from seed import run_seed
+
+_SERVICES = Path(__file__).resolve().parents[1]
+if str(_SERVICES) not in sys.path:
+    sys.path.insert(0, str(_SERVICES))
+from reporting.router import router as reporting_router  # noqa: E402
 
 logger = logging.getLogger("brasaland")
 
@@ -119,6 +125,7 @@ app.include_router(users_router)
 app.include_router(profiles_router)
 app.include_router(inventory_router)
 app.include_router(telemetry_router)
+app.include_router(reporting_router)
 app.include_router(incidents_router)
 app.include_router(suppliers_router)
 

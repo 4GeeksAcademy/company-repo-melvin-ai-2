@@ -105,6 +105,18 @@ Reset links use `PUBLIC_APP_URL` (default `http://localhost:3101`) as `{PUBLIC_A
 
 `POST /telemetry/events` stores batches. `GET /telemetry/report` is public and returns operational metrics for the engineering team: events per day, error rate by event type, login failure rate, and mean `api_latency_recorded` latency by route. Optional `start_date` and `end_date` are ISO 8601; omitted bounds use the last 7 days in UTC. The same query pair is cached in memory for 60 seconds. Metric functions live in `services/telemetry/analysis.py`. The backoffice page is `uis/backoffice` `/telemetry`.
 
+## Weekly location report
+
+Bearer token required, same login as the rest of the business API. These routes do not call `GET /telemetry/report`.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/reporting/weekly-location-performance` | KPI rows for `week_start`, or the latest loaded week |
+| `GET` | `/reporting/pipeline-runs/latest` | Newest run: status, start, end, records processed, errors |
+| `POST` | `/reporting/pipeline-runs` | Rebuild one week. Body may include `week_start`; omitted means the week that just ended |
+
+The flow lives in `data/pipelines/pipeline.py`. From the repo root: `services/api/.venv/bin/python data/pipelines/pipeline.py`.
+
 ## Supplier endpoints
 
 | Method | Path | Description |
