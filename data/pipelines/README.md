@@ -6,6 +6,6 @@ Each subfolder or file under `data/pipelines/` should represent **one pipeline o
 
 - **Main purpose**: consolidate in one place the data movement and transformation logic that powers the company’s applications and analytics.
 - **Recommendation**: document pipelines as you add them—their goal, data sources and sinks, dependencies, and how to run them in development, testing, and production.
-- Weekly Location Cost & Waste Report: design in [`PIPELINE_DESIGN.md`](PIPELINE_DESIGN.md). Run it from the repo root with `services/api/.venv/bin/python data/pipelines/pipeline.py`. The business brief is [`docs/pipelines/CONTEXT-company.md`](../../docs/pipelines/CONTEXT-company.md).
+- Weekly Location Cost & Waste Report: design in [`PIPELINE_DESIGN.md`](PIPELINE_DESIGN.md). The main flow is `pipeline.py`. Extract, transform, load, and the optional eval snapshot are subflows in `subflows/`. Run it from the repo root with `services/api/.venv/bin/python data/pipelines/pipeline.py`. The business brief is [`docs/pipelines/CONTEXT-company.md`](../../docs/pipelines/CONTEXT-company.md).
 
 > _Spanish version: [README.es.md](./README.es.md)._

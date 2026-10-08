@@ -10,16 +10,18 @@ From the repo root, with the API environment:
 An optional ``YYYY-MM-DD`` argument recomputes that week. The connection is
 ``DATABASE_URL`` (Prefect block ``brasaland-supabase``). This file does not
 print or store the password.
+
+The stage work lives in ``data/pipelines/subflows/``. This file only starts
+those subflows and records the run.
 """
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import os
 import sys
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -30,95 +32,27 @@ if str(ROOT) not in sys.path:
 # wait is tight on a cold start, so give that process a minute.
 os.environ.setdefault("PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS", "60")
 
-from prefect import flow, task  # noqa: E402
+from prefect import flow  # noqa: E402
 from prefect.states import State  # noqa: E402
 
 from data.pipelines import reporting_db  # noqa: E402
+from data.pipelines.subflows import (  # noqa: E402
+    extract_weekly_events,
+    load_weekly_location_performance,
+    transform_location_week,
+    write_eval_snapshot,
+)
 from data.process.weekly_location_performance import (  # noqa: E402
-    aggregate_location_week,
     monday_of,
     previous_completed_week,
 )
 
 logger = logging.getLogger("brasaland.pipeline")
-EVAL_DIR = ROOT / "data" / "eval"
-
-# Three tries cover a brief Supabase pooler blip. Five seconds gives the
-# pooler time to hand back a live connection before the next attempt.
-_DB_RETRIES = 3
-_DB_RETRY_DELAY_SECONDS = 5
-
-
-def _transform_cache_key(_context, parameters: dict) -> str:
-    """Cache key is the UTC week plus the event ids in that extract.
-
-    A successful transform is reused for one hour. A new event id changes the
-    key, so a late event is not served from the previous result.
-    """
-    week = parameters["week_start"]
-    week_text = week.isoformat() if isinstance(week, date) else str(week)
-    events = parameters.get("events") or []
-    identity = ",".join(sorted(str(event.get("event_id") or "") for event in events))
-    digest = hashlib.sha256(identity.encode()).hexdigest()
-    return f"{week_text}:{digest}"
-
-
-@task(
-    name="extract_weekly_events",
-    retries=_DB_RETRIES,
-    retry_delay_seconds=_DB_RETRY_DELAY_SECONDS,
-)
-def extract_weekly_events(week_start: date) -> list[dict]:
-    """Read one half-open UTC week from ``telemetry_events``."""
-    return reporting_db.fetch_week_events(week_start)
-
-
-@task(
-    name="transform_location_week",
-    cache_key_fn=_transform_cache_key,
-    cache_expiration=timedelta(hours=1),
-)
-def transform_location_week(week_start: date, events: list[dict]) -> dict:
-    """Aggregate to one row per location. Cached for one hour."""
-    return aggregate_location_week(week_start, events)
-
-
-@task(name="write_eval_snapshot")
-def write_eval_snapshot(week_start: date, transformed: dict) -> str:
-    """Optional context file. Outbound volume is not a KPI.
-
-    A failure here must not stop extract, transform, or load. The flow calls
-    this task with ``return_state=True``.
-    """
-    if os.environ.get("BRASALAND_EVAL_SNAPSHOT_FAIL") == "1":
-        raise RuntimeError("eval snapshot failed")
-    EVAL_DIR.mkdir(parents=True, exist_ok=True)
-    path = EVAL_DIR / f"weekly_location_performance_{week_start.isoformat()}.json"
-    payload = {
-        "week_start": week_start.isoformat(),
-        "outbound_events_count": transformed.get("outbound_events_count", 0),
-        "locations": len(transformed.get("rows") or []),
-        "events_skipped_missing_cost": transformed.get("events_skipped_missing_cost", 0),
-    }
-    path.write_text(json.dumps(payload), encoding="utf-8")
-    return str(path)
-
-
-@task(
-    name="load_weekly_location_performance",
-    retries=_DB_RETRIES,
-    retry_delay_seconds=_DB_RETRY_DELAY_SECONDS,
-)
-def load_weekly_location_performance(
-    run_id: str, week_start: date, transformed: dict
-) -> dict:
-    """Upsert the week and mark the run Completed in one transaction."""
-    return reporting_db.load_week(run_id, week_start, transformed)
 
 
 @flow(name="weekly_location_performance")
 def weekly_location_performance(week_start: date, run_id: str) -> dict:
-    """Extract, transform, and load one location week.
+    """Call the stage subflows in order. This flow does not query or sum.
 
     ``write_eval_snapshot`` is optional. Its failure is recorded and the load
     still runs.
