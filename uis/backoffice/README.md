@@ -19,6 +19,7 @@ uis/backoffice/
 - **Suppliers** (`/suppliers`) — Lucía’s supplier directory (FastAPI + TinyDB)
 - **Inventory** (`/backoffice/inventory/...`) — ingredients, deliveries, consumption/waste, order history (FastAPI + Supabase)
 - **Telemetry** (`/telemetry`) — operational report from `GET /telemetry/report` (volume, errors, login failures, route latency)
+- **Weekly report** (`/reporting`) — location purchase cost, waste, stockouts, and price alerts from `GET /reporting/weekly-location-performance`
 
 CONTEXT: [`memory-bank/supplier-directory.md`](../../memory-bank/supplier-directory.md), [`memory-bank/inventory-ui.md`](../../memory-bank/inventory-ui.md)
 

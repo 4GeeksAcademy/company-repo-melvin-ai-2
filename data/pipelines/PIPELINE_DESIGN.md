@@ -150,13 +150,15 @@ Table: `reporting.weekly_performance_run`. One row per attempt. A recompute inse
 
 ## Prefect mapping
 
-One flow: `weekly_location_performance`.
+Main flow: `weekly_location_performance` in `data/pipelines/pipeline.py`. It calls the subflows below in order and passes each result in. Each subflow is its own file under `data/pipelines/subflows/`. The main flow does not read the database or compute the KPIs itself.
 
-| Task | Stage |
+| Subflow | Stage |
 | --- | --- |
-| `extract_weekly_events` | Extraction from `telemetry_events`. |
-| `transform_location_week` | Aggregation to `location_id` and `week_start`. |
-| `load_weekly_location_performance` | Upsert into `reporting.weekly_location_performance` and the run row. |
+| `extract_weekly_events` | Extraction from `telemetry_events`. Input: `week_start`. Output: the week's events. |
+| `transform_location_week` | Aggregation to `location_id` and `week_start`. Input: `week_start` and those events. Output: KPI rows. |
+| `load_weekly_location_performance` | Upsert into `reporting.weekly_location_performance` and the run row. Input: `run_id`, `week_start`, and the KPI rows. |
+
+`write_eval_snapshot` is an optional subflow between transform and load. The main flow calls it with `return_state=True`, so a snapshot failure does not stop the load. The database work inside extract and load still retries three times. The aggregation inside transform stays cached for one hour.
 
 States that matter in this phase: `Running` from the moment the flow takes the week lock until the load transaction commits, `Completed` when that commit succeeds, and `Failed` when extract or load raises or the lock is already held. A second flow for backfill is not part of this design. A late week is the same flow with an explicit `week_start`.
 
