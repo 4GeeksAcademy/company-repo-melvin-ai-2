@@ -1,0 +1,4 @@
+# Nightly Brasaland telemetry export. 02:00 UTC, after the previous calendar day closes.
+# The API process does not start this script. Install with: crontab scripts/nightly-export.cron
+CRON_TZ=UTC
+0 2 * * * cd "/Users/melvinbewelljr/Desktop/cursor repos/company-repo-melvin-ai-2-1" && "/Users/melvinbewelljr/Desktop/cursor repos/company-repo-melvin-ai-2-1/services/api/.venv/bin/python" scripts/nightly_export.py
