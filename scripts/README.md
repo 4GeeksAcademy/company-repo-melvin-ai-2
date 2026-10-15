@@ -5,6 +5,20 @@ This folder contains **helper scripts** for the monorepo: development automation
 - **Main purpose**: group support tools that do not belong to a specific app, agent, or pipeline but make the team’s work easier.
 - **Recommendation**: document each script (what it does, parameters, requirements, usage examples) and keep them reproducible (and safe) across environments.
 
+## Nightly telemetry export
+
+- **Script:** [`nightly_export.py`](./nightly_export.py)
+- **Status table:** `job_runs`, written by [`services/job_runner.py`](../services/job_runner.py). This is the nightly orchestration log. `reporting.weekly_performance_run` stays the Milestone 6 pipeline log.
+- **Backup CSV:** `data/raw/telemetry_YYYY-MM-DD.csv`, created only when that file is absent. The weekly pipeline reads `telemetry_events`, not this file. The CSV is gitignored because it can contain `user_id`.
+- **Trigger:** crontab at 02:00 UTC, expression `0 2 * * *`. The line is in [`nightly-export.cron`](./nightly-export.cron). The API process does not start this script.
+
+```bash
+services/api/.venv/bin/python scripts/nightly_export.py
+TARGET_DATE=2026-09-28 services/api/.venv/bin/python scripts/nightly_export.py
+```
+
+`TARGET_DATE` is a UTC calendar day (`YYYY-MM-DD`). When it is unset, the script uses yesterday in UTC.
+
 ## Company File Analyzer — required layout
 
 Submission structure for this assignment (Brasaland uses `incidents-brasaland.csv` where the brief says `incidents-COMPANY.csv`):
