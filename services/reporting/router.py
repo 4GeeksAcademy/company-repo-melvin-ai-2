@@ -23,8 +23,8 @@ from app.auth.deps import get_current_user  # noqa: E402
 from data.pipelines.pipeline import (  # noqa: E402
     latest_weekly_performance_run,
     read_weekly_location_performance,
-    request_weekly_location_performance_run,
 )
+from services.tasks import run_weekly_location_performance  # noqa: E402
 
 router = APIRouter(prefix="/reporting", tags=["reporting"])
 
@@ -60,19 +60,22 @@ def latest_run(_user=Depends(get_current_user)) -> dict:
     return row
 
 
-@router.post("/pipeline-runs")
+@router.post("/pipeline-runs", status_code=202)
 def start_run(
     body: PipelineRunRequest | None = None,
     _user=Depends(get_current_user),
 ) -> dict:
+    """Queue the weekly rebuild and return before the worker starts it."""
     week = body.week_start if body else None
+    week_start = week.isoformat() if week else None
     try:
-        return request_weekly_location_performance_run(week)
+        queued = run_weekly_location_performance.delay(week_start)
     except Exception:
         raise HTTPException(
             status_code=503,
-            detail="The weekly report could not be rebuilt. Try again.",
+            detail="The weekly report could not be queued. Try again.",
         ) from None
+    return {"task_id": queued.id}
 
 
 @router.get("/weekly-location-performance", response_model=WeeklyLocationPerformance)

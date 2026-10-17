@@ -22,6 +22,7 @@ from app.profiles.router import router as profiles_router
 from app.public_schemas import HealthResponse
 from app.routers.incidents import router as incidents_router
 from app.routers.inventory import router as inventory_router
+from app.tasks.router import router as tasks_router
 from app.telemetry.router import router as telemetry_router
 from app.telemetry.store import ensure_telemetry_table
 from app.users.router import router as users_router
@@ -67,6 +68,13 @@ async def lifespan(_app: FastAPI):
                 "Telemetry table startup failed. Check DATABASE_URL and try again.",
                 file=sys.stderr,
             )
+        try:
+            from services.celery_app import app as celery_app
+
+            with celery_app.connection_or_acquire() as connection:
+                connection.ensure_connection(max_retries=1)
+        except Exception:
+            logger.exception("Redis broker was not ready at startup")
     except PersistenceError:
         logger.exception("Startup seed failed")
         print(
@@ -126,6 +134,7 @@ app.include_router(profiles_router)
 app.include_router(inventory_router)
 app.include_router(telemetry_router)
 app.include_router(reporting_router)
+app.include_router(tasks_router)
 app.include_router(incidents_router)
 app.include_router(suppliers_router)
 

@@ -48,9 +48,18 @@ def _with_ssl(url: str) -> str:
     return f"{url}{'&' if '?' in url else '?'}sslmode=require"
 
 
+def _use_installed_driver(url: str) -> str:
+    """Use psycopg2, which is the driver installed in the API image."""
+    if url.startswith("postgresql://"):
+        return "postgresql+psycopg2://" + url[len("postgresql://") :]
+    if url.startswith("postgres://"):
+        return "postgresql+psycopg2://" + url[len("postgres://") :]
+    return url
+
+
 def get_engine():
     global _engine
-    url = database_url()
+    url = _use_installed_driver(database_url())
     if not url:
         raise RuntimeError(
             "Missing DATABASE_URL. Copy services/api/.env.example to .env "

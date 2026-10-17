@@ -28,6 +28,26 @@ This repository is the **starter template** for transversal projects. You will w
 5. **Start implementing** in the right folder — do not dump everything in the root.
 6. **Document** what you add: each new app, service, agent, or pipeline gets a subfolder + README.
 
+## Weekly pipeline worker
+
+`POST /reporting/pipeline-runs` only queues the weekly rebuild. A separate Celery worker runs it. Redis is the broker. Stopping the API does not stop the worker, and a queued message stays in Redis until the worker finishes it.
+
+Start Redis, the worker, and Flower:
+
+```bash
+docker compose up --build redis worker flower
+```
+
+Flower is http://localhost:5555. Redis is published on port 6379 with the `noeviction` policy.
+
+To run the worker on the host instead, from the repo root, with Redis already up:
+
+```bash
+services/api/.venv/bin/celery -A services.celery_app worker --loglevel=info
+```
+
+Stop the Compose worker with `docker compose stop worker`. Stop a host worker with Ctrl+C. Neither command stops a worker that you started the other way.
+
 ## Docker (local platform)
 
 With Docker Desktop running, from the **repository root**:
