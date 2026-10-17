@@ -242,11 +242,14 @@ def test_reporting_routes_require_a_token_and_do_not_recompute(client, lucia_tok
     )
     started: dict = {}
 
-    def start(week_start=None):
-        started["week"] = week_start
-        return {"run_id": "run-new", "status": "Completed", "week_start": "2026-09-28"}
+    class _Queued:
+        id = "task-new"
 
-    monkeypatch.setattr("reporting.router.request_weekly_location_performance_run", start)
+    def delay(week_start=None):
+        started["week"] = week_start
+        return _Queued()
+
+    monkeypatch.setattr("reporting.router.run_weekly_location_performance.delay", delay)
 
     assert client.get("/reporting/pipeline-runs/latest").status_code == 401
     assert client.get("/reporting/weekly-location-performance").status_code == 401
@@ -284,9 +287,9 @@ def test_reporting_routes_require_a_token_and_do_not_recompute(client, lucia_tok
         headers=headers,
         json={"week_start": "2026-09-28"},
     )
-    assert manual.status_code == 200
-    assert manual.json()["run_id"] == "run-new"
-    assert started["week"] == date(2026, 9, 28)
+    assert manual.status_code == 202
+    assert manual.json() == {"task_id": "task-new"}
+    assert started["week"] == "2026-09-28"
 
 
 def test_latest_run_404_when_nothing_has_been_recorded(client, lucia_token, monkeypatch):

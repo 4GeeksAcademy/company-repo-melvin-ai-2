@@ -13,5 +13,6 @@ Each subfolder inside `services/` must correspond to **one specific service** (f
 |---------|------|---------|
 | Incident API | [`api/`](./api/README.md) | FastAPI upload/analyze/export for Brasaland incident CSVs (**100-row** sample at `scripts/incidents-brasaland.csv`; see [`memory-bank/company-file-analyzer.md`](../memory-bank/company-file-analyzer.md)) |
 | Nightly export | [`job_runner.py`](./job_runner.py) | `job_runs` status for `scripts/nightly_export.py`. Not mounted on the FastAPI app. |
+| Task queue | [`celery_app.py`](./celery_app.py) | Celery worker for `POST /reporting/pipeline-runs`. Redis broker. Not part of the FastAPI process. |
 
 > _Spanish version: [README.es.md](./README.es.md)._

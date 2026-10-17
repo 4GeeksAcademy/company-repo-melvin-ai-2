@@ -18,6 +18,9 @@ dependencies = [
   "psycopg2-binary>=2.9.12",
   "pandas>=2.2.2",
   "prefect>=3",
+  "celery>=5.6.3",
+  "redis>=7.0.1",
+  "flower>=2.0.1",
 ]
 
 [project.scripts]
