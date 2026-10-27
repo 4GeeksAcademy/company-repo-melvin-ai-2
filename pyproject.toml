@@ -9,6 +9,9 @@ description = "Brasaland monorepo auth test runner"
 requires-python = ">=3.12"
 dependencies = [
   "brasaland-api",
+  "matplotlib>=3.11.2",
+  "pandas>=3.0.6",
+  "scikit-learn>=1.9.1",
 ]
 
 [dependency-groups]
@@ -25,7 +28,7 @@ default-groups = ["dev"]
 brasaland-api = { path = "services/api", editable = true }
 
 [tool.pytest.ini_options]
-testpaths = ["services/api/tests"]
+testpaths = ["services/api/tests", "tests/pipelines/test_sales_forecast_split.py"]
 pythonpath = ["services/api"]
 
 [tool.coverage.run]

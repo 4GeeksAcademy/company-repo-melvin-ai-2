@@ -5,6 +5,14 @@ This folder contains **helper scripts** for the monorepo: development automation
 - **Main purpose**: group support tools that do not belong to a specific app, agent, or pipeline but make the team’s work easier.
 - **Recommendation**: document each script (what it does, parameters, requirements, usage examples) and keep them reproducible (and safe) across environments.
 
+## Sales forecast
+
+- **Script:** [`train_sales_forecast.py`](./train_sales_forecast.py)
+- **Series:** `data/raw/brasaland_sales.csv` (consolidated monthly revenue, 2016–2025)
+- **Brief:** [`docs/forecasting/CONTEXT-company.md`](../docs/forecasting/CONTEXT-company.md)
+- **Run:** `uv run python scripts/train_sales_forecast.py`
+- Training is 2016–2023. The check is 2024–2025. The chart is `data/eval/sales_forecast_test.png`. Metric definitions are in [`docs/forecasting/README.md`](../docs/forecasting/README.md).
+
 ## Nightly telemetry export
 
 - **Script:** [`nightly_export.py`](./nightly_export.py)
