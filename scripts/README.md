@@ -12,6 +12,7 @@ This folder contains **helper scripts** for the monorepo: development automation
 - **Brief:** [`docs/forecasting/CONTEXT-company.md`](../docs/forecasting/CONTEXT-company.md)
 - **Run:** `uv run python scripts/train_sales_forecast.py`
 - Training is 2016–2023. The check is 2024–2025. The chart is `data/eval/sales_forecast_test.png`. Metric definitions are in [`docs/forecasting/README.md`](../docs/forecasting/README.md).
+- **Evaluation:** [`evaluate_sales_forecast.py`](./evaluate_sales_forecast.py). Run `uv run python scripts/evaluate_sales_forecast.py`. Five chronological folds and the learning curve use only 2016–2023. The written diagnosis is `data/eval/evaluation_report.md`.
 
 ## Nightly telemetry export
 
