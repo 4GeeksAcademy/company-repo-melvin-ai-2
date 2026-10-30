@@ -28,7 +28,7 @@ default-groups = ["dev"]
 brasaland-api = { path = "services/api", editable = true }
 
 [tool.pytest.ini_options]
-testpaths = ["services/api/tests", "tests/pipelines/test_sales_forecast_split.py"]
+testpaths = ["services/api/tests", "tests/pipelines/test_sales_forecast_split.py", "tests/pipelines/test_sales_forecast_cv.py"]
 pythonpath = ["services/api"]
 
 [tool.coverage.run]

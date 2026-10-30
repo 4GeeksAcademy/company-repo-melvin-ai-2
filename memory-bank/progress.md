@@ -1,9 +1,10 @@
 # Progress
 
 ## Current Milestone
-Sales forecast on `Sales_Forecasting_me-ai2`: a Random Forest predicts consolidated monthly `revenue_usd` from `data/raw/brasaland_sales.csv`. Training is 2016–2023. The check is 2024–2025. The chart and the four test metrics are in `data/eval/`.
+Sales-forest evaluation on `Evaluating_Regression_model-melvin-ai-2`: five chronological folds and a learning curve on 2016–2023 only. RMSE is primary. The run classifies the frozen forest as overfitting. The chart and the written diagnosis are in `data/eval/`.
 
 ## Completed
+- Sales-forest evaluation (2026-10-29): `uv run python scripts/evaluate_sales_forecast.py` writes `data/eval/learning_curve.png` and `data/eval/evaluation_report.md`. Validation RMSE is 43,807 ± 7,923 USD. The learning curve keeps a wide gap (training error low, validation error about twice as high), so the diagnosis is overfitting. The named change is `min_samples_leaf` from 2 to 4, without raising `max_depth` above 3. `tests/pipelines/test_sales_forecast_cv.py` checks that each fold stays in time order.
 - Sales forecast (2026-10-27): `scripts/train_sales_forecast.py` trains a Random Forest (`random_state=42`) on causal lags, rolling history, and the calendar. `tests/pipelines/test_sales_forecast_split.py` checks the 8-year / 2-year split. Test metrics and the variability chart are under `data/eval/`. The brief is `docs/forecasting/CONTEXT-company.md`.
 - Async task queue (2026-10-17): Redis in Compose on port 6379 with `noeviction`. `services/celery_app.py` uses `REDIS_URL` as broker and result backend. The queued message is the week date. Retries are 3 with exponential backoff. After the last retry, `task_dead_letters` and the Redis `dlq` list store `task_id`, attempt, error, and timestamp. `GET /tasks/{task_id}` returns `pending`, `started`, `success`, or `failure`.
 - Nightly telemetry export (2026-10-14): `services/job_runner.py` owns `pending` → `processing` → `completed` or `failed` on `job_runs`. A `processing` row for `nightly_export` cancels a second start. A `completed` row for that `target_date` skips the CSV and the pipeline. `TARGET_DATE=YYYY-MM-DD` selects the day. `reporting.weekly_performance_run` is unchanged and is still the pipeline log.

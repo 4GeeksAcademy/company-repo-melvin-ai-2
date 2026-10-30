@@ -33,6 +33,18 @@ All four graded metrics are computed on 2024–2025. The forest is not scored on
 - **Gini** says whether the forecast ranks months in the same order as actual sales. 1 is a perfect ordering. Near 0, the model does not separate good months from bad ones, even if the dollar error looks small.
 - **K2 Score** is the skill against repeating the same month last year: `1 - (forest squared error / last-year squared error)`. The briefing names this score and does not give the algebra; this is the forecast skill score. 1 is a perfect test forecast. 0 ties "same month last year." A negative score is worse than that repeat.
 
+## Evaluation before staging
+
+The forest above is the model under review. This check does not train a second algorithm and does not use 2024–2025.
+
+```bash
+uv run python scripts/evaluate_sales_forecast.py
+```
+
+`TimeSeriesSplit` builds five chronological folds inside 2016–2023. Features for a fold are rebuilt only through the end of that fold, so a later fold cannot enter an earlier lag or rolling window. The learning curve grows the training prefix in time order and scores the next 12 months, still inside the training years. The figure is `data/eval/learning_curve.png`. The written diagnosis, MAE, and RMSE are in `data/eval/evaluation_report.md`.
+
+RMSE is the primary metric. December rises 20–30% and January falls 12–18%, and Felipe buys from the expected trend, so a few large monthly misses matter more than many small ones. MAE is the typical dollar miss. The latest run classifies the forest as overfitting: training RMSE stays low and validation RMSE stays about twice as high as the prefix grows. The matching change is to raise `min_samples_leaf` from 2 to 4, and not to increase `max_depth` above 3.
+
 ## Split
 
 2016–2023 is training (96 months). 2024–2025 is the check (24 months). The first 12 training months are dropped only because a 12-month lag does not exist yet. Those dropped months are still inside the training years, and no 2024 or 2025 row is used to build a training feature.
