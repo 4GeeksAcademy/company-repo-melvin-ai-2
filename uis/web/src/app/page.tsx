@@ -9,7 +9,10 @@ export default function HomePage() {
         support without leaving the platform.
       </p>
       <p>
-        <Link className="button" href="/incidents">
+        <Link className="button" href="/incidents/report">
+          Report an incident
+        </Link>{" "}
+        <Link className="button button--secondary" href="/incidents">
           Open incident analysis
         </Link>
       </p>

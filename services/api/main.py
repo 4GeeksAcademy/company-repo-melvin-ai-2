@@ -21,6 +21,7 @@ from app.errors import PersistenceError
 from app.profiles.router import router as profiles_router
 from app.public_schemas import HealthResponse
 from app.knowledge.router import router as knowledge_router
+from app.incidents.manager_router import router as incident_manager_router
 from app.routers.incidents import router as incidents_router
 from app.routers.inventory import router as inventory_router
 from app.tasks.router import router as tasks_router
@@ -136,6 +137,7 @@ app.include_router(inventory_router)
 app.include_router(telemetry_router)
 app.include_router(reporting_router)
 app.include_router(tasks_router)
+app.include_router(incident_manager_router)
 app.include_router(incidents_router)
 app.include_router(suppliers_router)
 app.include_router(knowledge_router)

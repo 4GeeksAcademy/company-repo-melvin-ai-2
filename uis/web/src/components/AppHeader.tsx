@@ -6,6 +6,8 @@ import { SessionNav, AUTH_PUBLIC_PATHS } from "@repo/auth";
 
 const links = [
   { href: "/", label: "Home" },
+  { href: "/incidents/report", label: "Report incident" },
+  { href: "/incidents/board", label: "Incident board" },
   { href: "/incidents", label: "Incident analysis" },
 ];
 

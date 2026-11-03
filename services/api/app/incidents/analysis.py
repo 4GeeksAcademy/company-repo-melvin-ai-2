@@ -1,53 +1,34 @@
-"""Shared Brasaland incident CSV validation and metrics (CONTEXT-aligned)."""
+"""Brasaland incident CSV metrics. Row rules live in packages.shared."""
 
 from __future__ import annotations
 
 import csv
 import io
+import sys
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
 
+_REPO = Path(__file__).resolve().parents[4]
+if str(_REPO) not in sys.path:
+    sys.path.insert(0, str(_REPO))
 
-VALID_LOCATIONS = {f"COL-{i:02d}" for i in range(1, 11)} | {
-    f"FLA-{i:02d}" for i in range(1, 5)
-}
-VALID_CATEGORIES = (
-    "CUSTOMER_COMPLAINT",
-    "EQUIPMENT",
-    "SUPPLY",
-    "FOOD_QUALITY",
-    "STAFF",
+from packages.shared.incident_validation import (  # noqa: E402
+    REQUIRED_HEADERS,
+    RULE_CLOSED_NO_SCORE,
+    RULE_EMPTY_DESCRIPTION,
+    RULE_INVALID_CATEGORY,
+    RULE_MISSING_LOCATION,
+    RULE_MISSING_REPORTER,
+    RULE_SCORE_OUT_OF_RANGE,
+    SCORE_LABELS,
+    VALID_CATEGORIES,
+    VALID_STATUSES,
+    cell as _cell,
+    classify_row,
+    parse_score as _parse_score,
 )
-VALID_STATUSES = ("OPEN", "CLOSED", "DISCARDED")
-
-REQUIRED_HEADERS = (
-    "incident_id",
-    "date",
-    "location_id",
-    "category",
-    "description",
-    "status",
-    "customer_id",
-    "satisfaction_score",
-    "reporter_id",
-)
-
-RULE_MISSING_LOCATION = "missing_location_id"
-RULE_INVALID_CATEGORY = "invalid_or_missing_category"
-RULE_EMPTY_DESCRIPTION = "empty_description"
-RULE_MISSING_REPORTER = "missing_reporter_id"
-RULE_CLOSED_NO_SCORE = "closed_no_score"
-RULE_SCORE_OUT_OF_RANGE = "score_out_of_range"
-
-SCORE_LABELS = {
-    1: "Very dissatisfied",
-    2: "Dissatisfied",
-    3: "Neutral",
-    4: "Satisfied",
-    5: "Very satisfied",
-}
 
 
 @dataclass
@@ -67,51 +48,6 @@ class AnalysisResult:
 
 class IncidentAnalysisError(ValueError):
     """Raised when an uploaded or local file cannot be analyzed."""
-
-
-def _cell(row: dict[str, str], key: str) -> str:
-    return (row.get(key) or "").strip()
-
-
-def _parse_score(raw: str) -> int | None | str:
-    value = raw.strip()
-    if value == "":
-        return None
-    try:
-        return int(value)
-    except ValueError:
-        return "invalid"
-
-
-def classify_row(row: dict[str, str]) -> list[str]:
-    reasons: list[str] = []
-
-    location_id = _cell(row, "location_id")
-    if not location_id or location_id not in VALID_LOCATIONS:
-        reasons.append(RULE_MISSING_LOCATION)
-
-    category = _cell(row, "category")
-    if not category or category not in VALID_CATEGORIES:
-        reasons.append(RULE_INVALID_CATEGORY)
-
-    description = _cell(row, "description")
-    if len(description) < 5:
-        reasons.append(RULE_EMPTY_DESCRIPTION)
-
-    reporter_id = _cell(row, "reporter_id")
-    if not reporter_id:
-        reasons.append(RULE_MISSING_REPORTER)
-
-    status = _cell(row, "status")
-    score = _parse_score(_cell(row, "satisfaction_score"))
-
-    if status == "CLOSED" and score is None:
-        reasons.append(RULE_CLOSED_NO_SCORE)
-
-    if score == "invalid" or (isinstance(score, int) and not 1 <= score <= 5):
-        reasons.append(RULE_SCORE_OUT_OF_RANGE)
-
-    return reasons
 
 
 def _pct_number(part: int, whole: int) -> float:

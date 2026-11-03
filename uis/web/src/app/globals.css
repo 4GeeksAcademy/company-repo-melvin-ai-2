@@ -215,3 +215,70 @@ td {
     align-items: flex-start;
   }
 }
+
+.incident-form,
+.incident-board {
+  display: grid;
+  gap: 1rem;
+}
+
+.incident-field,
+.incident-filters label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.incident-field input,
+.incident-field textarea,
+.incident-field select,
+.incident-filters select,
+.incident-table-wrap select {
+  min-height: 3rem;
+  font: inherit;
+  font-size: 1.05rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  background: #fff;
+  color: var(--ink);
+}
+
+.incident-field--branch {
+  padding: 0.75rem;
+  border: 3px solid var(--accent);
+  border-radius: 0.5rem;
+  background: #eef6f1;
+}
+
+.incident-field span[role="alert"] {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.incident-saved {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.incident-filters {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  margin-bottom: 1rem;
+}
+
+.incident-table-wrap {
+  overflow-x: auto;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
