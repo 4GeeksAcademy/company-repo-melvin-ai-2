@@ -10,6 +10,7 @@ from urllib.parse import quote
 from dotenv import load_dotenv
 from sqlmodel import Session, SQLModel, create_engine
 
+from app.incidents import models as _incident_models  # noqa: F401 — register managed incidents
 from app.inventory import models as _models  # noqa: F401 — register tables
 
 API_ROOT = Path(__file__).resolve().parents[2]
