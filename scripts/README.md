@@ -14,6 +14,12 @@ This folder contains **helper scripts** for the monorepo: development automation
 - Training is 2016–2023. The check is 2024–2025. The chart is `data/eval/sales_forecast_test.png`. Metric definitions are in [`docs/forecasting/README.md`](../docs/forecasting/README.md).
 - **Evaluation:** [`evaluate_sales_forecast.py`](./evaluate_sales_forecast.py). Run `uv run python scripts/evaluate_sales_forecast.py`. Five chronological folds and the learning curve use only 2016–2023. The written diagnosis is `data/eval/evaluation_report.md`.
 
+## Manual assistant
+
+- **Index:** [`index_knowledge.py`](./index_knowledge.py). Run `uv run python scripts/index_knowledge.py` after Qdrant is up and the two model ids are set.
+- **Recall@3:** [`evaluate_knowledge_recall.py`](./evaluate_knowledge_recall.py). The questions are `data/eval/test-queries.json`.
+- Design notes are in [`docs/rag/rag-design.md`](../docs/rag/rag-design.md).
+
 ## Nightly telemetry export
 
 - **Script:** [`nightly_export.py`](./nightly_export.py)

@@ -1,9 +1,10 @@
 # Progress
 
 ## Current Milestone
-Sales-forest evaluation on `Evaluating_Regression_model-melvin-ai-2`: five chronological folds and a learning curve on 2016–2023 only. RMSE is primary. The run classifies the frozen forest as overfitting. The chart and the written diagnosis are in `data/eval/`.
+Manual assistant on `milestone_7_melvin-ai-2`: four Brasaland manuals are chunked into Qdrant collection `brasaland_knowledge`. A location manager asks in the backoffice, and a generation model answers from the retrieved excerpts.
 
 ## Completed
+- Manual assistant (2026-11-02): `setup`, `embed`, `retrieve`, and `query` keep indexing, search, and generation separate. `POST /knowledge/query` returns only the answer. Backoffice `/knowledge` is the question page. `uv run python -m pytest tests/pipelines/test_rag.py` passed (5 tests). Live Recall@3 on `data/eval/test-queries.json` was 100% with `RAG_MIN_SCORE` 0.35. The brief is `docs/rag/brasaland-BRIEFING.en.md`.
 - Sales-forest evaluation (2026-10-29): `uv run python scripts/evaluate_sales_forecast.py` writes `data/eval/learning_curve.png` and `data/eval/evaluation_report.md`. Validation RMSE is 43,807 ± 7,923 USD. The learning curve keeps a wide gap (training error low, validation error about twice as high), so the diagnosis is overfitting. The named change is `min_samples_leaf` from 2 to 4, without raising `max_depth` above 3. `tests/pipelines/test_sales_forecast_cv.py` checks that each fold stays in time order.
 - Sales forecast (2026-10-27): `scripts/train_sales_forecast.py` trains a Random Forest (`random_state=42`) on causal lags, rolling history, and the calendar. `tests/pipelines/test_sales_forecast_split.py` checks the 8-year / 2-year split. Test metrics and the variability chart are under `data/eval/`. The brief is `docs/forecasting/CONTEXT-company.md`.
 - Async task queue (2026-10-17): Redis in Compose on port 6379 with `noeviction`. `services/celery_app.py` uses `REDIS_URL` as broker and result backend. The queued message is the week date. Retries are 3 with exponential backoff. After the last retry, `task_dead_letters` and the Redis `dlq` list store `task_id`, attempt, error, and timestamp. `GET /tasks/{task_id}` returns `pending`, `started`, `success`, or `failure`.

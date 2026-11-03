@@ -11,6 +11,7 @@ dependencies = [
   "brasaland-api",
   "matplotlib>=3.11.2",
   "pandas>=3.0.6",
+  "qdrant-client>=1.20.0",
   "scikit-learn>=1.9.1",
 ]
 
@@ -28,7 +29,7 @@ default-groups = ["dev"]
 brasaland-api = { path = "services/api", editable = true }
 
 [tool.pytest.ini_options]
-testpaths = ["services/api/tests", "tests/pipelines/test_sales_forecast_split.py", "tests/pipelines/test_sales_forecast_cv.py"]
+testpaths = ["services/api/tests", "tests/pipelines/test_sales_forecast_split.py", "tests/pipelines/test_sales_forecast_cv.py", "tests/pipelines/test_rag.py"]
 pythonpath = ["services/api"]
 
 [tool.coverage.run]
