@@ -857,3 +857,57 @@ td small {
   min-width: 0;
   white-space: normal;
 }
+
+.knowledge-query h1 {
+  margin-bottom: 0.6rem;
+  font-size: 1.6rem;
+}
+
+.knowledge-query p,
+.knowledge-query form {
+  margin-bottom: 1rem;
+}
+
+.knowledge-query label {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.knowledge-query textarea {
+  width: min(100%, 40rem);
+  padding: 0.7rem 0.8rem;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+}
+
+.knowledge-query button {
+  padding: 0.55rem 0.9rem;
+  color: #fff;
+  background: var(--green);
+  border: 0;
+  border-radius: 0.4rem;
+}
+
+.knowledge-answer {
+  max-width: 40rem;
+  padding: 0.9rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .knowledge-query {
+    color: #e7eee9;
+  }
+
+  .knowledge-query textarea,
+  .knowledge-answer {
+    color: #e7eee9;
+    background: #1b2622;
+    border-color: #2c3b34;
+  }
+}

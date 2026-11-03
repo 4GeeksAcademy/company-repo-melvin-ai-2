@@ -47,6 +47,13 @@ export function BackofficeNav() {
       >
         <span aria-hidden="true">▦</span> Weekly report
       </Link>
+      <Link
+        className={pathname?.startsWith("/knowledge") ? "active" : undefined}
+        href="/knowledge"
+        aria-current={pathname?.startsWith("/knowledge") ? "page" : undefined}
+      >
+        <span aria-hidden="true">?</span> Manuals
+      </Link>
       <Link href="/#locations">
         <span aria-hidden="true">⌖</span> Locations
       </Link>

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "gold-tier",
+    "question": "How many points do I need for Gold tier?",
+    "expected_source": "loyalty-program",
+    "expected_phrase": "Gold (50+ points)"
+  },
+  {
+    "id": "delivery-points",
+    "question": "Can Brasa Points be used on delivery orders?",
+    "expected_source": "loyalty-program",
+    "expected_phrase": "Can points be used on delivery orders?"
+  },
+  {
+    "id": "meat-waste-note",
+    "question": "When does meat waste in one shift need an explanatory note?",
+    "expected_source": "waste-protocol",
+    "expected_phrase": "over 2 kg of meat protein"
+  },
+  {
+    "id": "waste-target",
+    "question": "What is the monthly waste target for a location?",
+    "expected_source": "waste-protocol",
+    "expected_phrase": "below 4% of monthly ingredient cost"
+  },
+  {
+    "id": "bbq-ribs-allergens",
+    "question": "Does the BBQ Ribs dish have allergens?",
+    "expected_source": "menu-allergens",
+    "expected_phrase": "contains soy (sauce) and may contain trace peanuts"
+  },
+  {
+    "id": "zero-risk",
+    "question": "Can the server promise zero cross-contamination risk?",
+    "expected_source": "menu-allergens",
+    "expected_phrase": "Zero cross-contamination risk"
+  },
+  {
+    "id": "monday-order",
+    "question": "When must a location manager place the weekly supplier order?",
+    "expected_source": "supplier-ordering",
+    "expected_phrase": "every Monday before 10:00 a.m."
+  },
+  {
+    "id": "emergency-surcharge",
+    "question": "What surcharge does an emergency protein order carry?",
+    "expected_source": "supplier-ordering",
+    "expected_phrase": "8% surcharge"
+  }
+]
