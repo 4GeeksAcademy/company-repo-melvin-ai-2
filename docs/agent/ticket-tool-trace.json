@@ -1,0 +1,104 @@
+{
+  "question": "What is the status of ticket 1?",
+  "answer": "Ticket 1 is open. Category: equipment_failure. Origin: branch. Branch: medellin_centro. Opened: 2026-11-05T11:21:58.261271. Updated: 2026-11-05T11:21:58.261271.",
+  "error": "",
+  "thread_id": "bccfdad4-ec81-4cb4-95b5-863bf32460d1",
+  "trace": [
+    {
+      "node": "receive_question",
+      "output": "question accepted"
+    },
+    {
+      "node": "choose_sources",
+      "output": "ticket"
+    },
+    {
+      "node": "lookup_ticket",
+      "output": "Ticket 1 is open. Category: equipment_failure. Origin: branch. Branch: medellin_centro. Opened: 2026-11-05T11:21:58.261271. Updated: 2026-11-05T11:21:58.261271."
+    },
+    {
+      "node": "report_tools",
+      "output": "Ticket 1 is open. Category: equipment_failure. Origin: branch. Branch: medellin_centro. Opened: 2026-11-05T11:21:58.261271. Updated: 2026-11-05T11:21:58.261271."
+    }
+  ],
+  "checkpoints": [
+    {
+      "next": [],
+      "trace": [
+        {
+          "node": "receive_question",
+          "output": "question accepted"
+        },
+        {
+          "node": "choose_sources",
+          "output": "ticket"
+        },
+        {
+          "node": "lookup_ticket",
+          "output": "Ticket 1 is open. Category: equipment_failure. Origin: branch. Branch: medellin_centro. Opened: 2026-11-05T11:21:58.261271. Updated: 2026-11-05T11:21:58.261271."
+        },
+        {
+          "node": "report_tools",
+          "output": "Ticket 1 is open. Category: equipment_failure. Origin: branch. Branch: medellin_centro. Opened: 2026-11-05T11:21:58.261271. Updated: 2026-11-05T11:21:58.261271."
+        }
+      ]
+    },
+    {
+      "next": [
+        "report_tools"
+      ],
+      "trace": [
+        {
+          "node": "receive_question",
+          "output": "question accepted"
+        },
+        {
+          "node": "choose_sources",
+          "output": "ticket"
+        },
+        {
+          "node": "lookup_ticket",
+          "output": "Ticket 1 is open. Category: equipment_failure. Origin: branch. Branch: medellin_centro. Opened: 2026-11-05T11:21:58.261271. Updated: 2026-11-05T11:21:58.261271."
+        }
+      ]
+    },
+    {
+      "next": [
+        "lookup_ticket"
+      ],
+      "trace": [
+        {
+          "node": "receive_question",
+          "output": "question accepted"
+        },
+        {
+          "node": "choose_sources",
+          "output": "ticket"
+        }
+      ]
+    },
+    {
+      "next": [
+        "choose_sources"
+      ],
+      "trace": [
+        {
+          "node": "receive_question",
+          "output": "question accepted"
+        }
+      ]
+    },
+    {
+      "next": [
+        "receive_question"
+      ],
+      "trace": []
+    },
+    {
+      "next": [
+        "__start__"
+      ],
+      "trace": []
+    }
+  ]
+}

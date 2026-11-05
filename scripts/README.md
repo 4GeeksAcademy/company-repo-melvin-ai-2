@@ -23,7 +23,7 @@ This folder contains **helper scripts** for the monorepo: development automation
 
 - **Index:** [`index_knowledge.py`](./index_knowledge.py). Run `uv run python scripts/index_knowledge.py` after Qdrant is up and the two model ids are set.
 - **Recall@3:** [`evaluate_knowledge_recall.py`](./evaluate_knowledge_recall.py). The questions are `data/eval/test-queries.json`.
-- **Support agent:** [`services/agent/graph.py`](../services/agent/graph.py) compiles that same retrieval and generation into a graph. `POST /agent/query` invokes the graph. Run `uv run pytest tests/pipelines/test_agent_graph.py`.
+- **Support agent:** [`services/agent/graph.py`](../services/agent/graph.py) compiles that same retrieval and generation into a graph. Ticket and stock questions call the incident and inventory services from [`services/agent/tools.py`](../services/agent/tools.py). `POST /agent/query` invokes the graph. Run `uv run pytest tests/pipelines/test_agent_graph.py tests/pipelines/test_agent_tools.py`.
 - Design notes are in [`docs/rag/rag-design.md`](../docs/rag/rag-design.md).
 
 ## Nightly telemetry export
