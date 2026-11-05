@@ -51,7 +51,12 @@ def test_empty_retrieval_answers_honestly_without_generation():
 
     assert result["answer"] == NOT_ENOUGH
     assert result["error"] == ""
-    assert _nodes(result) == ["receive_question", "retrieve_context", "honest_answer"]
+    assert _nodes(result) == [
+        "receive_question",
+        "choose_sources",
+        "retrieve_context",
+        "honest_answer",
+    ]
     assert "generate_answer" not in _nodes(result)
 
 
@@ -81,7 +86,12 @@ def test_gold_tier_answer_stays_grounded_in_the_loyalty_manual():
 
     assert "50" in result["answer"]
     assert result["error"] == ""
-    assert _nodes(result) == ["receive_question", "retrieve_context", "generate_answer"]
+    assert _nodes(result) == [
+        "receive_question",
+        "choose_sources",
+        "retrieve_context",
+        "generate_answer",
+    ]
     assert len(result["checkpoints"]) >= len(result["trace"])
 
 
