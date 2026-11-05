@@ -1,0 +1,77 @@
+{
+  "question": "How many points do I need for Gold tier?",
+  "answer": "You need 50 points to reach Gold tier.",
+  "error": "",
+  "thread_id": "e745b02d-2239-4a35-b073-f75aae4d90b8",
+  "trace": [
+    {
+      "node": "receive_question",
+      "output": "question accepted"
+    },
+    {
+      "node": "retrieve_context",
+      "output": "kept 1 chunks"
+    },
+    {
+      "node": "generate_answer",
+      "output": "You need 50 points to reach Gold tier."
+    }
+  ],
+  "checkpoints": [
+    {
+      "next": [],
+      "trace": [
+        {
+          "node": "receive_question",
+          "output": "question accepted"
+        },
+        {
+          "node": "retrieve_context",
+          "output": "kept 1 chunks"
+        },
+        {
+          "node": "generate_answer",
+          "output": "You need 50 points to reach Gold tier."
+        }
+      ]
+    },
+    {
+      "next": [
+        "generate_answer"
+      ],
+      "trace": [
+        {
+          "node": "receive_question",
+          "output": "question accepted"
+        },
+        {
+          "node": "retrieve_context",
+          "output": "kept 1 chunks"
+        }
+      ]
+    },
+    {
+      "next": [
+        "retrieve_context"
+      ],
+      "trace": [
+        {
+          "node": "receive_question",
+          "output": "question accepted"
+        }
+      ]
+    },
+    {
+      "next": [
+        "receive_question"
+      ],
+      "trace": []
+    },
+    {
+      "next": [
+        "__start__"
+      ],
+      "trace": []
+    }
+  ]
+}
