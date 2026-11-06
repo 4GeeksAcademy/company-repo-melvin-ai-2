@@ -22,6 +22,9 @@ dependencies = [
   "redis>=7.0.1",
   "flower>=2.0.1",
   "langgraph>=1.2.19",
+  "fastmcp>=4.1.6",
+  "mcpauth>=0.1.1",
+  "langchain-mcp-adapters>=0.3.1",
 ]
 
 [project.scripts]

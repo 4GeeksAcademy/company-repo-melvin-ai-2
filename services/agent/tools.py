@@ -1,25 +1,14 @@
-"""Read-only tools for the support agent.
+"""Routing and spoken answers for the support agent.
 
-Ticket lookup calls the incident service. Stock lookup calls the inventory
-service. Neither tool creates, updates, or deletes records.
-
-The HTTP incident and inventory routes require a signed-in user. This tool
-uses the in-process service after POST /agent/query has already checked that
-user. The service functions do not take a separate token, and none is hardcoded.
+Ticket and stock reads happen on the MCP server. This module does not call
+the incident service. `plan_sources` still decides manuals versus tools from
+the question alone.
 """
 
 from __future__ import annotations
 
-import sys
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 from typing import TypedDict
-
-ROOT = Path(__file__).resolve().parents[2]
-API = ROOT / "services" / "api"
-for path in (str(ROOT), str(API)):
-    if path not in sys.path:
-        sys.path.insert(0, path)
 
 TOOL_TIMEOUT_SECONDS = 4
 TICKET_UNAVAILABLE = "I couldn't confirm that ticket's status right now."
@@ -82,73 +71,6 @@ def run_tool(action, timeout: float = TOOL_TIMEOUT_SECONDS):
         return None
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
-
-
-def lookup_ticket(query: TicketQuery, session) -> TicketLookup:
-    """Read one ticket, or the tickets matching the filters, from the incident service."""
-    from app.incidents.service import get_incident, list_incidents, to_public
-
-    ticket_id = query.get("ticket_id")
-    if ticket_id is not None:
-        row = get_incident(session, int(ticket_id))
-        tickets = [_ticket_view(to_public(row))] if row is not None else []
-    else:
-        rows = list_incidents(
-            session,
-            status=query.get("status"),
-            origin=query.get("origin"),
-            branch=query.get("branch"),
-            category=query.get("category"),
-        )
-        tickets = [_ticket_view(to_public(row)) for row in rows]
-    return {"found": bool(tickets), "tickets": tickets}
-
-
-def lookup_inventory(product: str, session) -> InventoryLookup:
-    """Read current stock from the inventory tables. Stock is entries minus exits."""
-    from sqlmodel import select
-
-    from app.inventory.models import Ingredient
-    from app.inventory.stock import stock_by_ingredient_ids
-
-    rows = list(session.exec(select(Ingredient).order_by(Ingredient.sku)).all())
-    needle = product.strip().lower()
-    if needle:
-        rows = [
-            row
-            for row in rows
-            if needle in row.name.lower() or needle in row.sku.lower()
-        ]
-    stocks = stock_by_ingredient_ids(session, [row.id for row in rows if row.id])
-    products = [
-        {
-            "id": row.id,
-            "name": row.name,
-            "sku": row.sku,
-            "unit": row.unit,
-            "current_stock": stocks.get(row.id, 0.0),
-        }
-        for row in rows
-    ]
-    return {"found": bool(products), "products": products}
-
-
-def default_ticket_lookup(query: TicketQuery) -> TicketLookup:
-    from sqlmodel import Session
-
-    from app.inventory.db import get_engine
-
-    with Session(get_engine()) as session:
-        return lookup_ticket(query, session)
-
-
-def default_inventory_lookup(product: str) -> InventoryLookup:
-    from sqlmodel import Session
-
-    from app.inventory.db import get_engine
-
-    with Session(get_engine()) as session:
-        return lookup_inventory(product, session)
 
 
 def format_tickets(result: dict) -> str:
@@ -231,15 +153,3 @@ def plan_sources(question: str) -> dict:
         "sources": "+".join(sources) or "none",
     }
 
-
-def _ticket_view(row: dict) -> dict:
-    return {
-        "id": row["id"],
-        "title": row["title"],
-        "status": row["status"],
-        "category": row["category"],
-        "origin": row["origin"],
-        "branch": row["branch"],
-        "created_at": row["created_at"],
-        "updated_at": row["updated_at"],
-    }
