@@ -22,6 +22,7 @@ from mcps.brasaland_tools.operations import (
     allowed_filter,
     change_ticket_status,
     create_ticket,
+    ensure_tables,
     open_session,
     read_stock,
     read_ticket,
@@ -227,7 +228,8 @@ def build_mcp(auth: MCPAuth) -> FastMCP:
     @mcp.tool(
         name="change_status",
         description=(
-            "Move an incident through the Brasaland lifecycle. "
+            "Move an incident through the Brasaland lifecycle by calling "
+            "PATCH /api/incidents/{id}/status. "
             "open can become in_progress or discarded. "
             "in_progress can become resolved or discarded. "
             "Requires the incidents:write scope."
@@ -237,8 +239,8 @@ def build_mcp(auth: MCPAuth) -> FastMCP:
     )
     def change_status(ticket_id: int, status: str) -> dict:
         def action() -> dict:
-            with open_session() as session:
-                return change_ticket_status(session, ticket_id, status)
+            ensure_tables()
+            return change_ticket_status(ticket_id, status)
 
         return _invoke(auth, "change_status", "incidents:write", action)
 

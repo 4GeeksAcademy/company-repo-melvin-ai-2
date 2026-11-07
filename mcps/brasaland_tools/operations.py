@@ -5,8 +5,11 @@ These functions call the existing services. The support agent does not.
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
+
+import httpx
 
 ROOT = Path(__file__).resolve().parents[2]
 API = ROOT / "services" / "api"
@@ -85,18 +88,61 @@ def create_ticket(session, payload: dict) -> dict:
     return {"found": True, "tickets": [_view(to_public(row))]}
 
 
-def change_ticket_status(session, ticket_id: int, status: str) -> dict:
-    from app.incidents.service import change_status, get_incident, status_change_error, to_public
+def _send_status_patch(path: str, payload: dict) -> httpx.Response:
+    """PATCH the Incidents Manager lifecycle route, not the whole incident."""
+    base = os.environ.get("BRASALAND_API_URL", "").strip()
+    if base:
+        headers = {}
+        token = os.environ.get("BRASALAND_API_TOKEN", "").strip()
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        try:
+            return httpx.patch(
+                base.rstrip("/") + path,
+                json=payload,
+                headers=headers,
+                timeout=10.0,
+            )
+        except httpx.HTTPError as exc:
+            raise ToolFailure(503, "The incident status endpoint did not respond.") from exc
 
-    row = get_incident(session, int(ticket_id))
-    if row is None:
-        raise ToolFailure(400, "That ticket was not found.")
-    error = status_change_error(row.status, {"status": status})
-    if error:
-        _field, message = error
-        raise ToolFailure(400, message)
-    updated = change_status(session, row, status.strip())
-    return {"found": True, "tickets": [_view(to_public(updated))]}
+    from fastapi import FastAPI
+    from starlette.testclient import TestClient
+
+    from app.auth.deps import get_current_user
+    from app.incidents.manager_router import router as incident_manager_router
+
+    app = FastAPI()
+    app.include_router(incident_manager_router)
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": 0,
+        "email": "mcp@brasaland.com",
+        "is_active": True,
+    }
+    with TestClient(app) as client:
+        return client.patch(path, json=payload)
+
+
+def _status_error(response: httpx.Response) -> str:
+    try:
+        body = response.json()
+    except ValueError:
+        return "The status change was rejected."
+    if isinstance(body, dict):
+        detail = body.get("detail")
+        if isinstance(detail, str) and detail.strip():
+            return detail.strip()
+    return "The status change was rejected."
+
+
+def change_ticket_status(ticket_id: int, status: str) -> dict:
+    """Send PATCH /api/incidents/{id}/status and return the updated ticket."""
+    path = f"/api/incidents/{int(ticket_id)}/status"
+    payload = {"status": status.strip()}
+    response = _send_status_patch(path, payload)
+    if response.status_code >= 400:
+        raise ToolFailure(response.status_code, _status_error(response))
+    return {"found": True, "tickets": [_view(response.json())]}
 
 
 def read_stock(session, product: str) -> dict:

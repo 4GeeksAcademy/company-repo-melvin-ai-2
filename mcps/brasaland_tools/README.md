@@ -12,7 +12,7 @@ Scopes:
 
 `write_inventory` accepts a write and rejects it. No scope can change stock. A missing or invalid token is HTTP 401. A valid token with the wrong scope is HTTP 403. A bad field or an illegal status change is HTTP 400. An inventory write is HTTP 403 with the read-only message. Those are different codes and different messages.
 
-`change_status` uses the incident lifecycle only: `open` to `in_progress` or `discarded`, and `in_progress` to `resolved` or `discarded`.
+`change_status` sends `PATCH /api/incidents/{id}/status`. It does not update the whole incident. The lifecycle is `open` to `in_progress` or `discarded`, and `in_progress` to `resolved` or `discarded`. With no `BRASALAND_API_URL`, that PATCH goes to the Incidents Manager route in this process and uses the same database. Set `BRASALAND_API_URL` and `BRASALAND_API_TOKEN` to send it to a running API instead.
 
 Each tool call writes one log line: client id from the token, tool name, and result.
 

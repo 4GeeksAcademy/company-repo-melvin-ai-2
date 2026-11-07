@@ -20,6 +20,7 @@ for path in (str(ROOT), str(API)):
     if path not in sys.path:
         sys.path.insert(0, path)
 
+from mcps.brasaland_tools import operations  # noqa: E402
 from mcps.brasaland_tools.server import build_app  # noqa: E402
 
 AUDIENCE = "brasaland-mcp"
@@ -174,6 +175,14 @@ def test_lifecycle_illegal_status_and_read_only_inventory(tmp_path, monkeypatch,
     token = _token(key, issuer, SCOPES)
     reader = _token(key, issuer, "inventory:read")
     caplog.set_level("INFO", logger="brasaland.mcp")
+    patches: list[tuple[str, dict]] = []
+    send_patch = operations._send_status_patch
+
+    def _record_patch(path: str, payload: dict):
+        patches.append((path, payload))
+        return send_patch(path, payload)
+
+    monkeypatch.setattr(operations, "_send_status_patch", _record_patch)
     try:
         with TestClient(build_app()) as client:
             session = _ready(client, token)
@@ -230,6 +239,10 @@ def test_lifecycle_illegal_status_and_read_only_inventory(tmp_path, monkeypatch,
             )
             assert moved.status_code == 200, moved.text
             assert "in_progress" in moved.text
+            assert patches[0] == (
+                f"/api/incidents/{ticket_id}/status",
+                {"status": "in_progress"},
+            )
 
             resolved, session = _call(
                 client,
