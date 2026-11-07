@@ -1,4 +1,4 @@
-"""Ticket and inventory tools read the real services. Routing stays visible."""
+"""Ticket and inventory questions go through an MCP client. Routing stays visible."""
 
 from __future__ import annotations
 
@@ -20,13 +20,12 @@ from agent.tools import (
     INVENTORY_UNAVAILABLE,
     TICKET_UNAVAILABLE,
     TOOL_TIMEOUT_SECONDS,
-    lookup_inventory,
-    lookup_ticket,
 )
 from app.incidents.models import IncidentRecord  # noqa: F401
 from app.incidents.service import create_incident
 from app.inventory.models import Ingredient, IngredientEntry, IngredientExit  # noqa: F401
 from data.pipelines.rag import NOT_ENOUGH
+from mcps.brasaland_tools.operations import read_stock, read_ticket
 
 LOYALTY = ROOT / "docs" / "company-knowledge-base" / "brasaland-loyalty-program.en.md"
 GOLD_FACT = "Gold (50+ points)"
@@ -45,6 +44,36 @@ def _nodes(result: dict) -> list[str]:
     return [step["node"] for step in result["trace"]]
 
 
+class ServiceBackedClient:
+    """MCP client double. It calls the MCP operations, not a graph shortcut."""
+
+    def __init__(self, engine):
+        self.engine = engine
+
+    def call_tool(self, name, arguments):
+        with Session(self.engine) as session:
+            if name in {"get_incident", "list_incidents"}:
+                query = arguments if name == "list_incidents" else {"ticket_id": arguments["ticket_id"]}
+                return read_ticket(session, query)
+            if name == "read_inventory":
+                return read_stock(session, arguments.get("product") or "")
+        raise AssertionError(name)
+
+
+class RejectingClient:
+    def call_tool(self, name, _arguments):
+        raise AssertionError(f"this question must not call {name}")
+
+
+def test_agent_does_not_import_the_incident_service():
+    tools = (ROOT / "services" / "agent" / "tools.py").read_text(encoding="utf-8")
+    graph = (ROOT / "services" / "agent" / "graph.py").read_text(encoding="utf-8")
+    assert "get_incident" not in tools
+    assert "from app.incidents" not in graph
+    assert "default_ticket_lookup" not in graph
+    assert "RemoteMCPClient" in graph
+
+
 def test_ticket_status_comes_from_the_incident_service(tmp_path):
     engine = _engine(tmp_path)
     with Session(engine) as session:
@@ -61,17 +90,13 @@ def test_ticket_status_comes_from_the_incident_service(tmp_path):
         )
         ticket_id = row.id
 
-    def ticket_lookup(query):
-        with Session(engine) as session:
-            return lookup_ticket(query, session)
-
     def search(_question, **_kwargs):
         raise AssertionError("a ticket question must not search the manuals")
 
     result = run_agent(
         f"What is the status of ticket {ticket_id}?",
         search=search,
-        ticket_lookup=ticket_lookup,
+        mcp_client=ServiceBackedClient(engine),
     )
 
     assert f"Ticket {ticket_id} is open." in result["answer"]
@@ -99,18 +124,11 @@ def test_policy_question_uses_the_manuals_and_not_a_tool():
             return NOT_ENOUGH
         return "You need 50 points to reach Gold tier."
 
-    def ticket_lookup(_query):
-        raise AssertionError("a policy question must not call the ticket tool")
-
-    def inventory_lookup(_product):
-        raise AssertionError("a policy question must not call the inventory tool")
-
     result = run_agent(
         "How many points do I need for Gold tier?",
         search=search,
         complete=complete,
-        ticket_lookup=ticket_lookup,
-        inventory_lookup=inventory_lookup,
+        mcp_client=RejectingClient(),
     )
 
     assert "50" in result["answer"]
@@ -123,13 +141,9 @@ def test_policy_question_uses_the_manuals_and_not_a_tool():
 def test_missing_ticket_does_not_invent_a_status(tmp_path):
     engine = _engine(tmp_path)
 
-    def ticket_lookup(query):
-        with Session(engine) as session:
-            return lookup_ticket(query, session)
-
     result = run_agent(
         "What is the status of ticket 482?",
-        ticket_lookup=ticket_lookup,
+        mcp_client=ServiceBackedClient(engine),
         search=lambda *_args, **_kwargs: (_ for _ in ()).throw(
             AssertionError("a missing ticket must not search the manuals")
         ),
@@ -143,13 +157,14 @@ def test_missing_ticket_does_not_invent_a_status(tmp_path):
 def test_ticket_tool_timeout_uses_the_fallback_and_the_live_limit_is_four_seconds():
     assert TOOL_TIMEOUT_SECONDS == 4
 
-    def ticket_lookup(_query):
-        time.sleep(0.3)
-        return {"found": True, "tickets": [{"status": "open"}]}
+    class SlowClient:
+        def call_tool(self, _name, _arguments):
+            time.sleep(0.3)
+            return {"found": True, "tickets": [{"status": "open"}]}
 
     result = run_agent(
         "What is the status of ticket 9?",
-        ticket_lookup=ticket_lookup,
+        mcp_client=SlowClient(),
         tool_timeout=0.05,
         search=lambda *_args, **_kwargs: [],
     )
@@ -181,13 +196,9 @@ def test_stock_question_reads_the_inventory_service(tmp_path):
         )
         session.commit()
 
-    def inventory_lookup(product):
-        with Session(engine) as session:
-            return lookup_inventory(product, session)
-
     result = run_agent(
         "Do we have beef?",
-        inventory_lookup=inventory_lookup,
+        mcp_client=ServiceBackedClient(engine),
         search=lambda *_args, **_kwargs: (_ for _ in ()).throw(
             AssertionError("a stock question must not search the manuals")
         ),
@@ -203,13 +214,9 @@ def test_stock_question_reads_the_inventory_service(tmp_path):
 def test_missing_product_does_not_invent_stock(tmp_path):
     engine = _engine(tmp_path)
 
-    def inventory_lookup(product):
-        with Session(engine) as session:
-            return lookup_inventory(product, session)
-
     result = run_agent(
         "Do we have saffron?",
-        inventory_lookup=inventory_lookup,
+        mcp_client=ServiceBackedClient(engine),
         search=lambda *_args, **_kwargs: (_ for _ in ()).throw(
             AssertionError("a missing product must not search the manuals")
         ),

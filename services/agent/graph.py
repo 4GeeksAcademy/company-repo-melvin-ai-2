@@ -1,7 +1,7 @@
 """Compiled support-agent graph.
 
 Each node does one job. Retrieval and answer generation stay in data.pipelines.rag.
-Ticket and inventory reads stay in services.agent.tools. `query()` is not used here.
+Ticket and inventory reads go through the MCP server. `query()` is not used here.
 """
 
 from __future__ import annotations
@@ -19,12 +19,11 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
 from data.pipelines.rag import NOT_ENOUGH, generate_answer, minimum_score, retrieve
+from services.agent.mcp_client import RemoteMCPClient
 from services.agent.tools import (
     INVENTORY_UNAVAILABLE,
     TICKET_UNAVAILABLE,
     TOOL_TIMEOUT_SECONDS,
-    default_inventory_lookup,
-    default_ticket_lookup,
     format_products,
     format_tickets,
     plan_sources,
@@ -133,14 +132,12 @@ def build_graph(
     search=None,
     complete=None,
     checkpointer=None,
-    ticket_lookup=None,
-    inventory_lookup=None,
+    mcp_client=None,
     tool_timeout: float | None = None,
 ):
     """Compile the graph. A missing node or edge fails here, before any run."""
     timeout = TOOL_TIMEOUT_SECONDS if tool_timeout is None else tool_timeout
-    read_ticket = ticket_lookup or default_ticket_lookup
-    read_inventory = inventory_lookup or default_inventory_lookup
+    client = mcp_client or RemoteMCPClient()
 
     def retrieve_context(state: AgentState) -> dict:
         hits = (search or retrieve)(state["question"], k=5, min_score=minimum_score())
@@ -150,7 +147,18 @@ def build_graph(
         }
 
     def lookup_ticket_node(state: AgentState) -> dict:
-        result = run_tool(lambda: read_ticket(state.get("ticket_query") or {}), timeout=timeout)
+        query = dict(state.get("ticket_query") or {})
+        if query.get("ticket_id") is not None:
+            tool = "get_incident"
+            arguments = {"ticket_id": query["ticket_id"]}
+        else:
+            tool = "list_incidents"
+            arguments = {
+                key: query[key]
+                for key in ("status", "category", "origin", "branch")
+                if query.get(key)
+            }
+        result = run_tool(lambda: client.call_tool(tool, arguments), timeout=timeout)
         failed = not isinstance(result, dict) or not result.get("found")
         output = "ticket unavailable" if failed else format_tickets(result)
         return {
@@ -160,7 +168,10 @@ def build_graph(
         }
 
     def lookup_inventory_node(state: AgentState) -> dict:
-        result = run_tool(lambda: read_inventory(state.get("product") or ""), timeout=timeout)
+        result = run_tool(
+            lambda: client.call_tool("read_inventory", {"product": state.get("product") or ""}),
+            timeout=timeout,
+        )
         failed = not isinstance(result, dict) or not result.get("found")
         output = "inventory unavailable" if failed else format_products(result)
         return {
@@ -293,8 +304,7 @@ def run_agent(
     complete=None,
     thread_id: str | None = None,
     graph=None,
-    ticket_lookup=None,
-    inventory_lookup=None,
+    mcp_client=None,
     tool_timeout: float | None = None,
 ) -> dict:
     """Run one question. The returned trace and checkpoints can be read after the run."""
@@ -302,14 +312,13 @@ def run_agent(
     if compiled is None:
         custom = any(
             item is not None
-            for item in (search, complete, ticket_lookup, inventory_lookup, tool_timeout)
+            for item in (search, complete, mcp_client, tool_timeout)
         )
         compiled = (
             build_graph(
                 search=search,
                 complete=complete,
-                ticket_lookup=ticket_lookup,
-                inventory_lookup=inventory_lookup,
+                mcp_client=mcp_client,
                 tool_timeout=tool_timeout,
             )
             if custom
