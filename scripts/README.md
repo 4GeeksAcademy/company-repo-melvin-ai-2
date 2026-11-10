@@ -23,7 +23,7 @@ This folder contains **helper scripts** for the monorepo: development automation
 
 - **Index:** [`index_knowledge.py`](./index_knowledge.py). Run `uv run python scripts/index_knowledge.py` after Qdrant is up and the two model ids are set.
 - **Recall@3:** [`evaluate_knowledge_recall.py`](./evaluate_knowledge_recall.py). The questions are `data/eval/test-queries.json`.
-- **Support agent:** [`services/agent/graph.py`](../services/agent/graph.py) compiles that same retrieval and generation into a graph. Ticket and stock questions call the MCP server through [`services/agent/mcp_client.py`](../services/agent/mcp_client.py). `choose_sources` is unchanged. `POST /agent/query` invokes the graph. Run `uv run pytest tests/pipelines/test_agent_graph.py tests/pipelines/test_agent_tools.py tests/pipelines/test_mcp_server.py`.
+- **Support agent:** [`services/agent/graph.py`](../services/agent/graph.py) compiles that same retrieval and generation into a graph. Ticket and stock questions call the MCP server through [`services/agent/mcp_client.py`](../services/agent/mcp_client.py). Approved corrections live in [`services/agent/memory.py`](../services/agent/memory.py), not in the Qdrant collection `brasaland_knowledge`. `choose_sources` is unchanged. `POST /agent/query` invokes the graph. Run `uv run pytest tests/pipelines/test_agent_graph.py tests/pipelines/test_agent_tools.py tests/pipelines/test_agent_memory.py tests/pipelines/test_mcp_server.py`.
 - **MCP server:** [`mcps/brasaland_tools/README.md`](../mcps/brasaland_tools/README.md). `uv run python -m mcps.brasaland_tools` listens on port 8765.
 - Design notes are in [`docs/rag/rag-design.md`](../docs/rag/rag-design.md).
 

@@ -25,6 +25,14 @@ Never say there is zero risk of cross-contamination, and never guarantee a dish 
 Keep peso and dollar amounts exactly as written. Do not convert currency.
 Answer in English."""
 
+_MEMORY_FIELD = """
+Return one JSON object and nothing else, with this shape:
+{"answer": "the sentence the location manager should read", "memory_proposal": null}
+Set memory_proposal to {"fact": "the operational correction", "why": "why it is worth keeping"} only when this turn states a new correction that is not already in the manuals.
+Use null for a greeting, a manual lookup, a ticket lookup, or a stock lookup.
+Do not propose allergen zero risk, a currency conversion, a password, a phone number, an email address, or a points or money figure.
+"""
+
 
 def minimum_score() -> float:
     """Cosine similarity floor. Neighbors below this are treated as a miss."""
@@ -53,8 +61,12 @@ def retrieve(query: str, *, k: int = 5, min_score: float | None = None, client=N
     return hits
 
 
-def generate_answer(question: str, context: list[dict], *, complete=None) -> str:
-    """Ask the generation model to speak from the retrieved excerpts only."""
+def generate_answer(question: str, context: list[dict], *, complete=None, memory_field: bool = False) -> str:
+    """Ask the generation model to speak from the retrieved excerpts only.
+
+    The support agent sets `memory_field` so the same call also returns `memory_proposal`.
+    The manuals endpoint leaves it off and still receives a plain answer.
+    """
     excerpts = "\n\n".join(
         f"[{item.get('source_document')} / {item.get('section')}]\n{item.get('text', '')}"
         for item in context
@@ -62,7 +74,8 @@ def generate_answer(question: str, context: list[dict], *, complete=None) -> str
     if not excerpts:
         excerpts = "No manual excerpt cleared the similarity threshold."
     user = f"Manual excerpts:\n{excerpts}\n\nQuestion: {question}"
-    reply = (complete or chat_complete)(_SYSTEM, user)
+    system = _SYSTEM + _MEMORY_FIELD if memory_field else _SYSTEM
+    reply = (complete or chat_complete)(system, user)
     text = reply.strip()
     if not text:
         return NOT_ENOUGH

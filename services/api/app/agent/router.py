@@ -28,19 +28,24 @@ UNAVAILABLE = (
 
 class AgentQuestion(BaseModel):
     question: str = Field(max_length=500)
+    thread_id: str | None = None
 
 
 class AgentAnswer(BaseModel):
     answer: str
+    thread_id: str
 
 
 @router.post("/query", response_model=AgentAnswer)
 def ask_agent(body: AgentQuestion, _user=Depends(get_current_user)) -> AgentAnswer:
     try:
-        result = run_agent(body.question)
+        result = run_agent(body.question, thread_id=body.thread_id)
     except Exception:
         logger.exception("Support agent failed")
         raise HTTPException(status_code=503, detail=UNAVAILABLE) from None
     if result.get("error"):
         raise HTTPException(status_code=400, detail=str(result["error"]))
-    return AgentAnswer(answer=str(result.get("answer") or ""))
+    return AgentAnswer(
+        answer=str(result.get("answer") or ""),
+        thread_id=str(result.get("thread_id") or ""),
+    )

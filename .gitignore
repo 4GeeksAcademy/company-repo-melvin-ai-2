@@ -22,6 +22,9 @@ results.csv
 data/eval/*.json
 !data/eval/test-queries.json
 
+# Support-agent episodic memory. Recreated by the agent.
+data/agent_memory/*.sqlite
+
 # Nightly telemetry backup. Contains user_id. The script recreates it.
 data/raw/telemetry_*.csv
 data/raw/telemetry_*.csv.partial

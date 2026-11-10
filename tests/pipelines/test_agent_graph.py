@@ -56,6 +56,7 @@ def test_empty_retrieval_answers_honestly_without_generation():
         "choose_sources",
         "retrieve_context",
         "honest_answer",
+        "consider_memory",
     ]
     assert "generate_answer" not in _nodes(result)
 
@@ -91,6 +92,7 @@ def test_gold_tier_answer_stays_grounded_in_the_loyalty_manual():
         "choose_sources",
         "retrieve_context",
         "generate_answer",
+        "consider_memory",
     ]
     assert len(result["checkpoints"]) >= len(result["trace"])
 

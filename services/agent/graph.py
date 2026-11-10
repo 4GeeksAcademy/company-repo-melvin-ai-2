@@ -20,6 +20,19 @@ from langgraph.graph import END, START, StateGraph
 
 from data.pipelines.rag import NOT_ENOUGH, generate_answer, minimum_score, retrieve
 from services.agent.mcp_client import RemoteMCPClient
+from services.agent.memory import (
+    APPROVED_REPLY,
+    EDITED_REPLY,
+    FORBIDDEN_REPLY,
+    PROPOSAL_QUESTION,
+    REJECTED_REPLY,
+    MemoryRefusal,
+    MemoryStore,
+    classify_decision,
+    fact_key,
+    parse_structured_reply,
+    proposal_for,
+)
 from services.agent.tools import (
     INVENTORY_UNAVAILABLE,
     TICKET_UNAVAILABLE,
@@ -50,6 +63,12 @@ class AgentState(TypedDict, total=False):
     inventory_result: dict
     ticket_failed: bool
     inventory_failed: bool
+    thread_id: str
+    memory_note: str
+    stop_after_decision: bool
+    memory_proposal: dict
+    model_proposal: dict
+    structured_reply: bool
 
 
 def _note(state: AgentState, node: str, output: str) -> list[dict]:
@@ -89,10 +108,11 @@ def choose_sources(state: AgentState) -> dict:
     }
 
 
-def route_after_question(state: AgentState) -> str:
-    if state.get("error"):
-        return END
-    return "choose_sources"
+def _spoken(state: AgentState, answer: str) -> str:
+    note = str(state.get("memory_note") or "").strip()
+    if note and note not in answer:
+        return f"{note} {answer}".strip()
+    return answer
 
 
 def route_after_plan(state: AgentState) -> str:
@@ -134,10 +154,12 @@ def build_graph(
     checkpointer=None,
     mcp_client=None,
     tool_timeout: float | None = None,
+    memory: MemoryStore | None = None,
 ):
     """Compile the graph. A missing node or edge fails here, before any run."""
     timeout = TOOL_TIMEOUT_SECONDS if tool_timeout is None else tool_timeout
     client = mcp_client or RemoteMCPClient()
+    store = memory or MemoryStore()
 
     def retrieve_context(state: AgentState) -> dict:
         hits = (search or retrieve)(state["question"], k=5, min_score=minimum_score())
@@ -195,20 +217,35 @@ def build_graph(
                 if state.get("inventory_failed")
                 else format_products(state.get("inventory_result") or {})
             )
+        recalled = store.relevant(state.get("question") or "")
+        if recalled:
+            lines = "\n".join(f"- {row['fact']}" for row in recalled)
+            question = f"Approved operational memory:\n{lines}\n\n{question}"
         if notes:
             question = f"{question}\n\nLive records:\n" + "\n".join(notes)
-        answer = generate_answer(question, state.get("context") or [], complete=complete)
+        spoken, model_proposal, structured = parse_structured_reply(
+            generate_answer(
+                question,
+                state.get("context") or [],
+                complete=complete,
+                memory_field=True,
+            )
+        )
+        answer = _spoken(state, spoken)
         return {
             "answer": answer,
             "error": "",
+            "model_proposal": model_proposal,
+            "structured_reply": structured,
             "trace": _note(state, "generate_answer", answer),
         }
 
     def honest_answer(state: AgentState) -> dict:
+        answer = _spoken(state, NOT_ENOUGH)
         return {
-            "answer": NOT_ENOUGH,
+            "answer": answer,
             "error": "",
-            "trace": _note(state, "honest_answer", NOT_ENOUGH),
+            "trace": _note(state, "honest_answer", answer),
         }
 
     def report_tools(state: AgentState) -> dict:
@@ -225,15 +262,198 @@ def build_graph(
                 if state.get("inventory_failed")
                 else format_products(state.get("inventory_result") or {})
             )
-        answer = " ".join(part for part in parts if part) or TICKET_UNAVAILABLE
+        answer = _spoken(state, " ".join(part for part in parts if part) or TICKET_UNAVAILABLE)
         return {
             "answer": answer,
             "error": "",
             "trace": _note(state, "report_tools", answer),
         }
 
+    def route_after_question(state: AgentState) -> str:
+        message = state.get("question") or ""
+        if classify_decision(message)["label"] not in {"approve", "reject", "edit"}:
+            store.close_unanswered()
+        thread = state.get("thread_id") or ""
+        if state.get("error"):
+            if store.pending(thread):
+                return "resolve_proposal"
+            return END
+        if store.pending(thread):
+            return "resolve_proposal"
+        return "choose_sources"
+
+    def route_after_resolve(state: AgentState) -> str:
+        if state.get("stop_after_decision"):
+            return END
+        return "choose_sources"
+
+    def resolve_proposal(state: AgentState) -> dict:
+        thread = state.get("thread_id") or ""
+        pending = store.pending(thread)
+        message = state.get("question") or ""
+        if not pending:
+            return {
+                "stop_after_decision": False,
+                "trace": _note(state, "resolve_proposal", "no pending proposal"),
+            }
+        if not message.strip():
+            store.log(
+                thread_id=thread,
+                proposal=pending["fact"],
+                decision="reject",
+                outcome="discarded because the user did not answer",
+                originating_message=pending["originating_message"],
+                decision_message="",
+            )
+            store.clear_pending(thread)
+            return {
+                "answer": REJECTED_REPLY,
+                "error": "",
+                "stop_after_decision": True,
+                "memory_note": "",
+                "trace": _note(state, "resolve_proposal", "discarded because the user did not answer"),
+            }
+        decision = classify_decision(message)
+        label = decision["label"]
+        origin = pending["originating_message"]
+        if label == "unclear":
+            store.log(
+                thread_id=thread,
+                proposal=pending["fact"],
+                decision="reject",
+                outcome="discarded because the reply was not a clear decision",
+                originating_message=origin,
+                decision_message=message,
+            )
+            store.clear_pending(thread)
+            return {
+                "stop_after_decision": False,
+                "memory_note": "",
+                "trace": _note(state, "resolve_proposal", "discarded"),
+            }
+        if label == "reject":
+            store.log(
+                thread_id=thread,
+                proposal=pending["fact"],
+                decision="reject",
+                outcome="rejected",
+                originating_message=origin,
+                decision_message=message,
+            )
+            store.clear_pending(thread)
+            note = REJECTED_REPLY
+        elif label == "edit":
+            try:
+                store.write_memory(
+                    decision["fact"],
+                    why="The user edited the proposal.",
+                    originating_message=origin,
+                    decision="edit",
+                )
+            except MemoryRefusal as exc:
+                outcome = f"refused: {exc}"
+                note = FORBIDDEN_REPLY
+            else:
+                outcome = "stored"
+                note = EDITED_REPLY
+            store.log(
+                thread_id=thread,
+                proposal=pending["fact"],
+                decision="edit",
+                outcome=outcome,
+                originating_message=origin,
+                decision_message=message,
+            )
+            store.clear_pending(thread)
+        else:
+            try:
+                store.write_memory(
+                    pending["fact"],
+                    why=pending["why"],
+                    originating_message=origin,
+                    decision="approve",
+                )
+            except MemoryRefusal as exc:
+                outcome = f"refused: {exc}"
+                note = FORBIDDEN_REPLY
+            else:
+                outcome = "stored"
+                note = APPROVED_REPLY
+            store.log(
+                thread_id=thread,
+                proposal=pending["fact"],
+                decision="approve",
+                outcome=outcome,
+                originating_message=origin,
+                decision_message=message,
+            )
+            store.clear_pending(thread)
+        remainder = decision["remainder"]
+        if remainder:
+            return {
+                "question": remainder,
+                "memory_note": note,
+                "stop_after_decision": False,
+                "trace": _note(state, "resolve_proposal", f"{label} and continue"),
+            }
+        return {
+            "answer": note,
+            "error": "",
+            "memory_note": note,
+            "stop_after_decision": True,
+            "trace": _note(state, "resolve_proposal", label),
+        }
+
+    def consider_memory(state: AgentState) -> dict:
+        thread = state.get("thread_id") or ""
+        answer = _spoken(state, state.get("answer") or "")
+        if store.pending(thread):
+            return {
+                "answer": answer,
+                "memory_proposal": None,
+                "trace": _note(state, "consider_memory", "proposal already pending"),
+            }
+        if state.get("structured_reply"):
+            proposal = state.get("model_proposal") or None
+        else:
+            proposal = proposal_for(state.get("question") or "", answer)
+        if proposal is None:
+            return {
+                "answer": answer,
+                "memory_proposal": None,
+                "trace": _note(state, "consider_memory", "nothing to remember"),
+            }
+        if proposal["forbidden"]:
+            store.log(
+                thread_id=thread,
+                proposal=proposal["fact"],
+                decision="reject",
+                outcome=f"refused: {proposal['why']}",
+                originating_message=state.get("question") or "",
+                decision_message="",
+            )
+            return {
+                "answer": f"{answer} {FORBIDDEN_REPLY}".strip(),
+                "memory_proposal": None,
+                "trace": _note(state, "consider_memory", "forbidden"),
+            }
+        if any(fact_key(row["fact"]) == fact_key(proposal["fact"]) for row in store.read_memory()):
+            return {
+                "answer": answer,
+                "memory_proposal": None,
+                "trace": _note(state, "consider_memory", "already stored"),
+            }
+        store.propose(thread, proposal["fact"], proposal["why"], state.get("question") or "")
+        spoken = f"{answer} {PROPOSAL_QUESTION} {proposal['fact']}".strip()
+        return {
+            "answer": spoken,
+            "memory_proposal": {"fact": proposal["fact"], "why": proposal["why"]},
+            "trace": _note(state, "consider_memory", "proposed"),
+        }
+
     builder = StateGraph(AgentState)
     builder.add_node("receive_question", receive_question)
+    builder.add_node("resolve_proposal", resolve_proposal)
     builder.add_node("choose_sources", choose_sources)
     builder.add_node("lookup_ticket", lookup_ticket_node)
     builder.add_node("lookup_inventory", lookup_inventory_node)
@@ -241,10 +461,20 @@ def build_graph(
     builder.add_node("generate_answer", write_answer)
     builder.add_node("honest_answer", honest_answer)
     builder.add_node("report_tools", report_tools)
+    builder.add_node("consider_memory", consider_memory)
     builder.add_edge(START, "receive_question")
     builder.add_conditional_edges(
         "receive_question",
         route_after_question,
+        {
+            "resolve_proposal": "resolve_proposal",
+            "choose_sources": "choose_sources",
+            END: END,
+        },
+    )
+    builder.add_conditional_edges(
+        "resolve_proposal",
+        route_after_resolve,
         {"choose_sources": "choose_sources", END: END},
     )
     builder.add_conditional_edges(
@@ -280,9 +510,10 @@ def build_graph(
             "honest_answer": "honest_answer",
         },
     )
-    builder.add_edge("generate_answer", END)
-    builder.add_edge("honest_answer", END)
-    builder.add_edge("report_tools", END)
+    builder.add_edge("generate_answer", "consider_memory")
+    builder.add_edge("honest_answer", "consider_memory")
+    builder.add_edge("report_tools", "consider_memory")
+    builder.add_edge("consider_memory", END)
     return builder.compile(checkpointer=checkpointer or MemorySaver())
 
 
@@ -306,13 +537,14 @@ def run_agent(
     graph=None,
     mcp_client=None,
     tool_timeout: float | None = None,
+    memory: MemoryStore | None = None,
 ) -> dict:
     """Run one question. The returned trace and checkpoints can be read after the run."""
     compiled = graph
     if compiled is None:
         custom = any(
             item is not None
-            for item in (search, complete, mcp_client, tool_timeout)
+            for item in (search, complete, mcp_client, tool_timeout, memory)
         )
         compiled = (
             build_graph(
@@ -320,6 +552,7 @@ def run_agent(
                 complete=complete,
                 mcp_client=mcp_client,
                 tool_timeout=tool_timeout,
+                memory=memory,
             )
             if custom
             else get_graph()
@@ -333,6 +566,11 @@ def run_agent(
             "answer": "",
             "error": "",
             "trace": [],
+            "thread_id": thread,
+            "memory_note": "",
+            "stop_after_decision": False,
+            "structured_reply": False,
+            "model_proposal": None,
         },
         config,
     )
