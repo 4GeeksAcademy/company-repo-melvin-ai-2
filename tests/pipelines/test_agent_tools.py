@@ -102,7 +102,7 @@ def test_ticket_status_comes_from_the_incident_service(tmp_path):
     assert f"Ticket {ticket_id} is open." in result["answer"]
     assert "equipment_failure" in result["answer"]
     assert "branch" in result["answer"]
-    assert _nodes(result)[2:4] == ["lookup_ticket", "report_tools"]
+    assert _nodes(result)[3:5] == ["lookup_ticket", "report_tools"]
     assert "retrieve_context" not in _nodes(result)
     assert "lookup_inventory" not in _nodes(result)
 

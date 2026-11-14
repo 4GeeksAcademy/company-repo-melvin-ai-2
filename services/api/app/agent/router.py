@@ -16,6 +16,7 @@ for path in (str(ROOT), str(SERVICES)):
         sys.path.insert(0, path)
 
 from agent.graph import run_agent  # noqa: E402
+from services.agent.guardrails import summary as guardrail_summary  # noqa: E402
 from app.auth.deps import get_current_user  # noqa: E402
 
 logger = logging.getLogger("brasaland.agent")
@@ -34,6 +35,19 @@ class AgentQuestion(BaseModel):
 class AgentAnswer(BaseModel):
     answer: str
     thread_id: str
+
+
+class GuardrailSummary(BaseModel):
+    structural: int
+    content: int
+    security: int
+    guardrails: dict[str, int]
+
+
+@router.get("/guardrails", response_model=GuardrailSummary)
+def read_guardrails(_user=Depends(get_current_user)) -> GuardrailSummary:
+    """Counts for this process: structural, content, and security."""
+    return GuardrailSummary(**guardrail_summary())
 
 
 @router.post("/query", response_model=AgentAnswer)

@@ -19,6 +19,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
 from data.pipelines.rag import NOT_ENOUGH, generate_answer, minimum_score, retrieve
+from services.agent.guardrails import check_output, isolate, screen_message
 from services.agent.mcp_client import RemoteMCPClient
 from services.agent.memory import (
     APPROVED_REPLY,
@@ -69,6 +70,7 @@ class AgentState(TypedDict, total=False):
     memory_proposal: dict
     model_proposal: dict
     structured_reply: bool
+    guard_stop: bool
 
 
 def _note(state: AgentState, node: str, output: str) -> list[dict]:
@@ -222,7 +224,7 @@ def build_graph(
             lines = "\n".join(f"- {row['fact']}" for row in recalled)
             question = f"Approved operational memory:\n{lines}\n\n{question}"
         if notes:
-            question = f"{question}\n\nLive records:\n" + "\n".join(notes)
+            question = f"{question}\n\n{isolate('tools', chr(10).join(notes))}"
         spoken, model_proposal, structured = parse_structured_reply(
             generate_answer(
                 question,
@@ -267,6 +269,57 @@ def build_graph(
             "answer": answer,
             "error": "",
             "trace": _note(state, "report_tools", answer),
+        }
+
+    def screen_input(state: AgentState) -> dict:
+        """Refuse a jailbreak or a personal task, and redirect casual talk, before any tool or model call."""
+        if state.get("error"):
+            return {
+                "guard_stop": False,
+                "trace": _note(state, "screen_input", "skipped"),
+            }
+        screened = screen_message(state.get("question") or "")
+        if screened["action"] == "allow":
+            return {
+                "guard_stop": False,
+                "trace": _note(state, "screen_input", "allowed"),
+            }
+        return {
+            "answer": screened["answer"],
+            "error": "",
+            "guard_stop": True,
+            "model_proposal": None,
+            "structured_reply": False,
+            "trace": _note(state, "screen_input", screened["name"]),
+        }
+
+    def route_after_screen(state: AgentState) -> str:
+        if state.get("guard_stop"):
+            return END
+        return route_after_question(state)
+
+    def screen_output(state: AgentState) -> dict:
+        """Block a malformed reply, a leaked instruction, or a poisoned memory fact."""
+        answer = str(state.get("answer") or "")
+        verdict = check_output(answer)
+        proposal = state.get("model_proposal") or None
+        fact = str(proposal.get("fact") or "") if isinstance(proposal, dict) else ""
+        fact_screen = screen_message(fact) if fact else {"action": "allow", "name": ""}
+        fact_output = check_output(fact) if fact else {"action": "allow", "name": ""}
+        blocked = (
+            verdict["action"] != "allow"
+            or fact_screen["action"] != "allow"
+            or fact_output["action"] != "allow"
+        )
+        if not blocked:
+            return {"trace": _note(state, "screen_output", "allowed")}
+        name = verdict["name"] or fact_screen["name"] or fact_output["name"]
+        spoken = verdict["answer"] if verdict["action"] != "allow" else answer
+        return {
+            "answer": spoken,
+            "model_proposal": None,
+            "structured_reply": True,
+            "trace": _note(state, "screen_output", name),
         }
 
     def route_after_question(state: AgentState) -> str:
@@ -453,6 +506,7 @@ def build_graph(
 
     builder = StateGraph(AgentState)
     builder.add_node("receive_question", receive_question)
+    builder.add_node("screen_input", screen_input)
     builder.add_node("resolve_proposal", resolve_proposal)
     builder.add_node("choose_sources", choose_sources)
     builder.add_node("lookup_ticket", lookup_ticket_node)
@@ -462,10 +516,12 @@ def build_graph(
     builder.add_node("honest_answer", honest_answer)
     builder.add_node("report_tools", report_tools)
     builder.add_node("consider_memory", consider_memory)
+    builder.add_node("screen_output", screen_output)
     builder.add_edge(START, "receive_question")
+    builder.add_edge("receive_question", "screen_input")
     builder.add_conditional_edges(
-        "receive_question",
-        route_after_question,
+        "screen_input",
+        route_after_screen,
         {
             "resolve_proposal": "resolve_proposal",
             "choose_sources": "choose_sources",
@@ -510,9 +566,10 @@ def build_graph(
             "honest_answer": "honest_answer",
         },
     )
-    builder.add_edge("generate_answer", "consider_memory")
-    builder.add_edge("honest_answer", "consider_memory")
-    builder.add_edge("report_tools", "consider_memory")
+    builder.add_edge("generate_answer", "screen_output")
+    builder.add_edge("honest_answer", "screen_output")
+    builder.add_edge("report_tools", "screen_output")
+    builder.add_edge("screen_output", "consider_memory")
     builder.add_edge("consider_memory", END)
     return builder.compile(checkpointer=checkpointer or MemorySaver())
 
@@ -571,6 +628,7 @@ def run_agent(
             "stop_after_decision": False,
             "structured_reply": False,
             "model_proposal": None,
+            "guard_stop": False,
         },
         config,
     )

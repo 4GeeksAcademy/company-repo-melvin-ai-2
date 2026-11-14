@@ -31,7 +31,7 @@ def test_blank_question_stops_before_retrieval():
     result = run_agent("   ", search=search)
 
     assert result["error"] == EMPTY_QUESTION
-    assert _nodes(result) == ["receive_question"]
+    assert _nodes(result) == ["receive_question", "screen_input"]
     assert result["checkpoints"]
     assert "retrieve_context" not in _nodes(result)
 
@@ -53,9 +53,11 @@ def test_empty_retrieval_answers_honestly_without_generation():
     assert result["error"] == ""
     assert _nodes(result) == [
         "receive_question",
+        "screen_input",
         "choose_sources",
         "retrieve_context",
         "honest_answer",
+        "screen_output",
         "consider_memory",
     ]
     assert "generate_answer" not in _nodes(result)
@@ -89,9 +91,11 @@ def test_gold_tier_answer_stays_grounded_in_the_loyalty_manual():
     assert result["error"] == ""
     assert _nodes(result) == [
         "receive_question",
+        "screen_input",
         "choose_sources",
         "retrieve_context",
         "generate_answer",
+        "screen_output",
         "consider_memory",
     ]
     assert len(result["checkpoints"]) >= len(result["trace"])
