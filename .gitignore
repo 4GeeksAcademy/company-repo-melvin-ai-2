@@ -28,3 +28,5 @@ data/agent_memory/*.sqlite
 # Nightly telemetry backup. Contains user_id. The script recreates it.
 data/raw/telemetry_*.csv
 data/raw/telemetry_*.csv.partial
+data/raw/rfp/
+data/pipelines/rfp_intake/nltk_data/
