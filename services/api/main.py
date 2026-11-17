@@ -22,6 +22,7 @@ from app.profiles.router import router as profiles_router
 from app.public_schemas import HealthResponse
 from app.agent.router import router as agent_router
 from app.knowledge.router import router as knowledge_router
+from app.rfp.router import router as rfp_router
 from app.incidents.manager_router import router as incident_manager_router
 from app.routers.incidents import router as incidents_router
 from app.routers.inventory import router as inventory_router
@@ -61,6 +62,16 @@ async def lifespan(_app: FastAPI):
             logger.exception("Inventory startup failed")
             print(
                 "Startup inventory failed. Check DATABASE_URL and try again.",
+                file=sys.stderr,
+            )
+        try:
+            from app.rfp.db import init_rfp_db
+
+            print(f"Startup RFP intake: {init_rfp_db()}.")
+        except Exception:
+            logger.exception("RFP intake startup failed")
+            print(
+                "RFP intake startup failed. Check DATABASE_URL and try again.",
                 file=sys.stderr,
             )
         try:
@@ -143,6 +154,7 @@ app.include_router(incidents_router)
 app.include_router(suppliers_router)
 app.include_router(knowledge_router)
 app.include_router(agent_router)
+app.include_router(rfp_router)
 
 
 @app.exception_handler(StarletteHTTPException)

@@ -883,6 +883,23 @@ td small {
   border-radius: 0.4rem;
 }
 
+.rfp-intake form,
+.rfp-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.rfp-layout {
+  grid-template-columns: minmax(12rem, 18rem) 1fr;
+}
+
+@media (max-width: 720px) {
+  .rfp-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.rfp-intake button,
 .knowledge-query button {
   padding: 0.55rem 0.9rem;
   color: #fff;

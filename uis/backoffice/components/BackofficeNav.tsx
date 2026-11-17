@@ -48,6 +48,13 @@ export function BackofficeNav() {
         <span aria-hidden="true">▦</span> Weekly report
       </Link>
       <Link
+        className={pathname?.startsWith("/rfp") ? "active" : undefined}
+        href="/rfp"
+        aria-current={pathname?.startsWith("/rfp") ? "page" : undefined}
+      >
+        <span aria-hidden="true">✉</span> RFP intake
+      </Link>
+      <Link
         className={pathname?.startsWith("/knowledge") ? "active" : undefined}
         href="/knowledge"
         aria-current={pathname?.startsWith("/knowledge") ? "page" : undefined}
