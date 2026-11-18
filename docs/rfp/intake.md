@@ -17,7 +17,7 @@ Readability is Flesch-Kincaid and Gunning Fog from `py-readability-metrics`. The
 - A document is an RFP when it names a service (catering, concession, or co-branding) and a scope or a deadline. A franchise inquiry with none of those is `discarded`. That stop applies only to that ticket. A false negative stays visible as a discarded ticket.
 - If two departments quote different amounts, the synthesizer keeps both and says they conflict.
 - The upload returns as soon as the PDF is stored. `BackgroundTasks` runs the graph in the same API process, and the page polls `GET /rfp/tickets`. A crash leaves the ticket at `analyzing` and stores `error_detail`. Part 1 does not add another status.
-- Part 2 reads `handoff_json` on the ticket. It carries `ticket_id`, the metadata, and `key_aspects` by department.
+- Part 2 reads `handoff_json` on the ticket. It carries `ticket_id`, the metadata, and `key_aspects` by department. The draft graph is described in `docs/rfp/draft.md`.
 
 ## Samples
 
