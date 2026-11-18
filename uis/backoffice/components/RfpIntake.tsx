@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { listRfpTickets, RfpTicket, uploadRfp } from "@/lib/rfp";
+import { listRfpTickets, RfpTicket, startRfpDraft, uploadRfp } from "@/lib/rfp";
 
 const OWNERS: Record<string, string> = {
   marketing: "Camila Ospina",
@@ -65,14 +65,29 @@ export function RfpIntake() {
     }
   }
 
+  async function startDraft(ticketId: string) {
+    setError(null);
+    try {
+      await startRfpDraft(ticketId);
+      await refresh();
+    } catch (err) {
+      if (err instanceof Error && err.name === "AuthSessionError") return;
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not reach the Brasaland service. Check your connection and try again.",
+      );
+    }
+  }
+
   const current = tickets.find((ticket) => ticket.ticket_id === selected) ?? null;
 
   return (
     <section className="rfp-intake" aria-labelledby="rfp-intake-title">
       <h1 id="rfp-intake-title">RFP intake</h1>
       <p>
-        Upload a request for Camila Ospina. The ticket shows what each department
-        needs, and who to ask, without opening the PDF.
+        Upload a request for Camila Ospina. After intake, each department drafts
+        its section and the ticket shows whether that draft is ready or provisional.
       </p>
       <form onSubmit={onSubmit}>
         <label htmlFor="rfp-file">
@@ -106,19 +121,42 @@ export function RfpIntake() {
             </li>
           ))}
         </ul>
-        {current ? <TicketDetail ticket={current} /> : null}
+        {current ? <TicketDetail ticket={current} onDraft={startDraft} /> : null}
       </div>
     </section>
   );
 }
 
-function TicketDetail({ ticket }: { ticket: RfpTicket }) {
+function TicketDetail({
+  ticket,
+  onDraft,
+}: {
+  ticket: RfpTicket;
+  onDraft: (ticketId: string) => Promise<void>;
+}) {
+  const provisional = ticket.sections.filter(
+    (section) => section.approval_status === "needs_human_review",
+  );
   return (
     <article aria-live="polite">
       <h2>{ticket.client_name || "RFP ticket"}</h2>
       <p>
         Status: <strong>{ticket.status}</strong>
       </p>
+      {ticket.status === "intake_complete" ? (
+        <button type="button" onClick={() => void onDraft(ticket.ticket_id)}>
+          Draft the proposal
+        </button>
+      ) : null}
+      {provisional.length > 0 ? (
+        <p role="status">
+          Provisional draft for{" "}
+          {provisional
+            .map((section) => section.contact_name || OWNERS[section.department_id])
+            .join(", ")}
+          . A person still needs to review that section. The last draft is kept.
+        </p>
+      ) : null}
       {ticket.error_detail ? <p role="alert">{ticket.error_detail}</p> : null}
       {ticket.discard_reason ? <p>{ticket.discard_reason}</p> : null}
       {ticket.summary ? <p>{ticket.summary}</p> : null}
@@ -164,6 +202,20 @@ function TicketDetail({ ticket }: { ticket: RfpTicket }) {
           </ul>
           {section.open_questions.length > 0 ? (
             <p>Still open: {section.open_questions.join(" ")}</p>
+          ) : null}
+          {section.approval_status === "needs_human_review" ? (
+            <p>This draft is provisional.</p>
+          ) : null}
+          {section.draft_content ? <p>{section.draft_content}</p> : null}
+          {section.evaluation ? (
+            <p>
+              Readability {section.evaluation.readability.pass ? "passed" : "failed"}. Relevance{" "}
+              {section.evaluation.relevance.pass ? "passed" : "failed"}. Compliance{" "}
+              {section.evaluation.compliance.pass ? "passed" : "failed"}.
+              {section.evaluation.feedback_for_generator
+                ? ` ${section.evaluation.feedback_for_generator}`
+                : ""}
+            </p>
           ) : null}
         </section>
       ))}

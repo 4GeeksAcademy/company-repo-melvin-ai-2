@@ -1,10 +1,22 @@
 import { authFetch } from "@repo/auth";
 
+export type RfpEvaluation = {
+  overall_pass: boolean;
+  feedback_for_generator: string;
+  readability: { pass: boolean; score: number | null; details: string };
+  relevance: { pass: boolean; missing_aspects: string[] };
+  compliance: { pass: boolean; rule_ids: string[]; violations: { rule_id: string; message: string }[] };
+};
+
 export type RfpSection = {
   department_id: string;
   contact_name: string;
   key_aspects: string[];
   open_questions: string[];
+  draft_content?: string;
+  approval_status?: string;
+  iterations?: number;
+  evaluation?: RfpEvaluation | null;
 };
 
 export type RfpTicket = {
@@ -33,6 +45,16 @@ export async function uploadRfp(file: File): Promise<RfpTicket> {
   if (!response.ok) {
     throw new Error(
       "The RFP could not be uploaded. Try again or contact hello@brasaland.com.",
+    );
+  }
+  return (await response.json()) as RfpTicket;
+}
+
+export async function startRfpDraft(ticketId: string): Promise<RfpTicket> {
+  const response = await authFetch(`/rfp/tickets/${ticketId}/draft`, { method: "POST" });
+  if (!response.ok) {
+    throw new Error(
+      "The proposal draft could not be started. Try again or contact hello@brasaland.com.",
     );
   }
   return (await response.json()) as RfpTicket;

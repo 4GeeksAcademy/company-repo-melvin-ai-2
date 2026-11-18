@@ -9,10 +9,25 @@ from sqlmodel import Session
 
 from app.auth.deps import get_current_user
 from app.inventory.db import get_engine
-from app.rfp.service import create_ticket, list_tickets, process_ticket, ticket_payload
+from app.rfp.service import (
+    create_ticket,
+    list_tickets,
+    mark_drafting,
+    process_draft,
+    process_ticket,
+    ticket_payload,
+)
 
 logger = logging.getLogger("brasaland.rfp")
 router = APIRouter(prefix="/rfp", tags=["rfp-intake"])
+
+
+def _draft_later(ticket_id: str) -> None:
+    try:
+        with Session(get_engine()) as session:
+            process_draft(session, ticket_id)
+    except Exception:
+        logger.exception("RFP draft failed for %s", ticket_id)
 
 
 def _run_later(ticket_id: str) -> None:
@@ -47,6 +62,27 @@ async def upload_rfp(
             detail="The RFP ticket could not be saved. Try again or contact hello@brasaland.com.",
         ) from None
     background.add_task(_run_later, body["ticket_id"])
+    return body
+
+
+@router.post("/tickets/{ticket_id}/draft", status_code=202)
+def start_draft(
+    ticket_id: str,
+    background: BackgroundTasks,
+    _user=Depends(get_current_user),
+) -> dict:
+    """Start department drafts from the Part 1 handoff."""
+    try:
+        with Session(get_engine()) as session:
+            body = mark_drafting(session, ticket_id)
+    except LookupError:
+        raise HTTPException(status_code=404, detail="That RFP ticket was not found.") from None
+    except ValueError:
+        raise HTTPException(
+            status_code=409,
+            detail="Drafting starts from an intake_complete ticket.",
+        ) from None
+    background.add_task(_draft_later, ticket_id)
     return body
 
 

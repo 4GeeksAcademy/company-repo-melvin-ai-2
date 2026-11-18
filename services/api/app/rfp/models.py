@@ -43,3 +43,7 @@ class RfpDepartmentSection(SQLModel, table=True):
     key_aspects: str = ""
     contact_name: str = ""
     open_questions: str = ""
+    draft_content: str = ""
+    evaluation_results: str = ""
+    approval_status: str = ""
+    iterations: int = 0

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sys
+import threading
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,6 +17,7 @@ if str(ROOT) not in sys.path:
 
 from data.pipelines.rfp_intake.analyze import DEPARTMENTS
 from data.pipelines.rfp_intake.document import pdf_to_markdown, readability_metrics
+from data.pipelines.rfp_intake.draft_graph import draft_from_handoff, set_phase_hook
 from data.pipelines.rfp_intake.graph import analyze_rfp
 
 from app.rfp.models import RfpDepartmentSection, RfpTicket
@@ -100,6 +102,113 @@ def _store_sections(session: Session, row: RfpTicket, result: dict) -> None:
         )
 
 
+def mark_drafting(session: Session, ticket_id: str) -> dict:
+    """Move an intake_complete ticket to drafting before the graph runs."""
+    row = session.get(RfpTicket, ticket_id)
+    if row is None:
+        raise LookupError(ticket_id)
+    if row.status != "intake_complete":
+        raise ValueError("Drafting starts from an intake_complete ticket.")
+    row.status = "drafting"
+    row.updated_at = datetime.now(timezone.utc)
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return ticket_payload(session, row)
+
+
+def process_draft(session: Session, ticket_id: str) -> RfpTicket:
+    """Draft from the Part 1 handoff. The PDF is not opened again."""
+    row = session.get(RfpTicket, ticket_id)
+    if row is None:
+        raise LookupError(ticket_id)
+    if row.status not in {"intake_complete", "drafting"}:
+        raise ValueError("Drafting starts from an intake_complete ticket.")
+    try:
+        handoff = json.loads(row.handoff_json) if row.handoff_json else {}
+    except json.JSONDecodeError as exc:
+        raise ValueError("The Part 1 handoff is missing.") from exc
+    if not handoff.get("key_aspects"):
+        raise ValueError("The Part 1 handoff is missing.")
+    sections = session.exec(
+        select(RfpDepartmentSection).where(RfpDepartmentSection.ticket_id == ticket_id)
+    ).all()
+    handoff["section_questions"] = {
+        section.department_id: [line for line in section.open_questions.splitlines() if line]
+        for section in sections
+    }
+    _mark(session, ticket_id, "drafting")
+    lock = threading.Lock()
+
+    def publish(phase: str) -> None:
+        if phase != "under_evaluation":
+            return
+        with lock:
+            _mark(session, ticket_id, "under_evaluation", only_from="drafting")
+
+    set_phase_hook(publish)
+    try:
+        drafted = draft_from_handoff(handoff)
+    except Exception as exc:
+        set_phase_hook(None)
+        failed = session.get(RfpTicket, ticket_id)
+        if failed is not None:
+            failed.error_detail = str(exc)[:500]
+            failed.updated_at = datetime.now(timezone.utc)
+            session.add(failed)
+            session.commit()
+        raise
+    finally:
+        set_phase_hook(None)
+    session.expire_all()
+    row = session.get(RfpTicket, ticket_id)
+    stored = {
+        section.department_id: section
+        for section in session.exec(
+            select(RfpDepartmentSection).where(RfpDepartmentSection.ticket_id == ticket_id)
+        ).all()
+    }
+    for section in drafted.get("sections") or []:
+        current = stored.get(section["department_id"])
+        if current is None:
+            current = RfpDepartmentSection(
+                ticket_id=ticket_id,
+                department_id=section["department_id"],
+                contact_name=section.get("contact_name") or "",
+            )
+            session.add(current)
+        current.draft_content = section.get("draft_content") or ""
+        current.evaluation_results = json.dumps(section.get("evaluation") or {})
+        current.approval_status = section.get("approval_status") or ""
+        current.iterations = int(section.get("iterations") or 0)
+        if section.get("contact_name"):
+            current.contact_name = section["contact_name"]
+    row.status = str(drafted.get("status") or "under_evaluation")
+    row.handoff_json = json.dumps(drafted.get("handoff") or {})
+    row.error_detail = ""
+    row.updated_at = datetime.now(timezone.utc)
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return row
+
+
+def _mark(session: Session, ticket_id: str, status: str, only_from: str | None = None) -> None:
+    """Write the ticket status on its own connection so a parallel evaluator can publish it."""
+    with Session(session.get_bind()) as extra:
+        current = extra.get(RfpTicket, ticket_id)
+        if current is None:
+            return
+        if only_from is not None and current.status != only_from:
+            return
+        if current.status == status:
+            return
+        current.status = status
+        current.updated_at = datetime.now(timezone.utc)
+        extra.add(current)
+        extra.commit()
+
+
 def ticket_payload(session: Session, row: RfpTicket) -> dict:
     sections = session.exec(
         select(RfpDepartmentSection).where(RfpDepartmentSection.ticket_id == row.ticket_id)
@@ -130,6 +239,10 @@ def ticket_payload(session: Session, row: RfpTicket) -> dict:
                 "contact_name": section.contact_name,
                 "key_aspects": [line for line in section.key_aspects.splitlines() if line],
                 "open_questions": [line for line in section.open_questions.splitlines() if line],
+                "draft_content": section.draft_content,
+                "approval_status": section.approval_status,
+                "iterations": section.iterations,
+                "evaluation": _evaluation(section.evaluation_results),
             }
             for section in sections
         ],
@@ -137,6 +250,16 @@ def ticket_payload(session: Session, row: RfpTicket) -> dict:
         "created_at": row.created_at.isoformat(),
         "updated_at": row.updated_at.isoformat(),
     }
+
+
+def _evaluation(raw: str) -> dict | None:
+    if not raw:
+        return None
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+    return parsed or None
 
 
 def list_tickets(session: Session) -> list[RfpTicket]:
