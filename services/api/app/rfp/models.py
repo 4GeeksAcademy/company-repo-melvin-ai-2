@@ -30,6 +30,8 @@ class RfpTicket(SQLModel, table=True):
     open_questions: str = ""
     discard_reason: str = ""
     error_detail: str = ""
+    final_document: str = ""
+    trace_json: str = ""
     created_at: datetime = Field(default_factory=_utc_now)
     updated_at: datetime = Field(default_factory=_utc_now)
 
@@ -47,3 +49,7 @@ class RfpDepartmentSection(SQLModel, table=True):
     evaluation_results: str = ""
     approval_status: str = ""
     iterations: int = 0
+    approver: str = ""
+    approved_at: str = ""
+    decision: str = ""
+    approval_rounds: int = 0

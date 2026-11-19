@@ -16,6 +16,11 @@ export type RfpSection = {
   draft_content?: string;
   approval_status?: string;
   iterations?: number;
+  approver?: string;
+  approved_at?: string;
+  decision?: string;
+  approval_rounds?: number;
+  awaiting_decision?: boolean;
   evaluation?: RfpEvaluation | null;
 };
 
@@ -35,6 +40,7 @@ export type RfpTicket = {
   open_questions: string[];
   discard_reason: string;
   error_detail: string;
+  final_document?: string;
   sections: RfpSection[];
 };
 
@@ -55,6 +61,34 @@ export async function startRfpDraft(ticketId: string): Promise<RfpTicket> {
   if (!response.ok) {
     throw new Error(
       "The proposal draft could not be started. Try again or contact hello@brasaland.com.",
+    );
+  }
+  return (await response.json()) as RfpTicket;
+}
+
+export async function startRfpApproval(ticketId: string): Promise<RfpTicket> {
+  const response = await authFetch(`/rfp/tickets/${ticketId}/approval`, { method: "POST" });
+  if (!response.ok) {
+    throw new Error(
+      "Approval could not be opened. Try again or contact hello@brasaland.com.",
+    );
+  }
+  return (await response.json()) as RfpTicket;
+}
+
+export async function decideRfpSection(
+  ticketId: string,
+  departmentId: string,
+  decision: "approve" | "reject" | "request_changes",
+): Promise<RfpTicket> {
+  const response = await authFetch(`/rfp/tickets/${ticketId}/approval/${departmentId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ decision }),
+  });
+  if (!response.ok) {
+    throw new Error(
+      "That decision could not be saved. Try again or contact hello@brasaland.com.",
     );
   }
   return (await response.json()) as RfpTicket;
