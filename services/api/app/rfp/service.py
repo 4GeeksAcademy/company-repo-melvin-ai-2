@@ -16,6 +16,20 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from data.pipelines.rfp_intake.analyze import DEPARTMENTS
+from data.pipelines.rfp_intake.approval import (
+    CEO_ID,
+    CEO_OWNER,
+    ceo_section,
+    ready_for_document,
+    render_final_document,
+)
+from data.pipelines.rfp_intake.approval_graph import (
+    is_interrupted,
+    read_approval,
+    resume_department,
+    run_arbitration,
+    start_department,
+)
 from data.pipelines.rfp_intake.document import pdf_to_markdown, readability_metrics
 from data.pipelines.rfp_intake.draft_graph import draft_from_handoff, set_phase_hook
 from data.pipelines.rfp_intake.graph import analyze_rfp
@@ -209,6 +223,170 @@ def _mark(session: Session, ticket_id: str, status: str, only_from: str | None =
         extra.commit()
 
 
+def begin_approval(session: Session, ticket_id: str) -> RfpTicket:
+    """Pause each department for a signature. The pause is stored in SQLite."""
+    row = session.get(RfpTicket, ticket_id)
+    if row is None:
+        raise LookupError(ticket_id)
+    if row.status not in {"under_evaluation", "needs_human_review"}:
+        raise ValueError("Approval starts after the department drafts are ready.")
+    try:
+        handoff = json.loads(row.handoff_json) if row.handoff_json else {}
+    except json.JSONDecodeError as exc:
+        raise ValueError("The Part 2 handoff is missing.") from exc
+    stored = _sections_by_id(session, ticket_id)
+    payload = [_section_dict(section) for section in stored.values() if section.draft_content]
+    if not payload:
+        raise ValueError("Approval starts after the department drafts are ready.")
+    metadata = dict(handoff.get("metadata") or {})
+    if not metadata and row.budget_range:
+        metadata = {"budget_range": row.budget_range, "client_name": row.client_name}
+    arbitration = run_arbitration(ticket_id, payload, metadata, False)
+    revised = {section["department_id"]: section for section in arbitration.get("sections") or payload}
+    for department_id, section in revised.items():
+        current = stored.get(department_id)
+        if current is not None:
+            current.draft_content = section.get("draft_content") or current.draft_content
+    if any(conflict.get("trigger_id") == "ceo-threshold" for conflict in arbitration.get("conflicts") or []):
+        if CEO_ID not in stored:
+            ceo = ceo_section(metadata or {"budget_range": row.budget_range})
+            current = RfpDepartmentSection(
+                ticket_id=ticket_id,
+                department_id=CEO_ID,
+                contact_name=CEO_OWNER,
+                draft_content=ceo["draft_content"],
+                approval_status="pending",
+            )
+            session.add(current)
+            stored[CEO_ID] = current
+            revised[CEO_ID] = ceo
+    session.commit()
+    for department_id, section in revised.items():
+        start_department(
+            ticket_id,
+            {
+                "department_id": department_id,
+                "owner": section.get("owner") or section.get("contact_name") or _owner(department_id),
+                "contact_name": section.get("contact_name") or _owner(department_id),
+                "draft_content": section.get("draft_content") or "",
+                "evaluation": section.get("evaluation") or _evaluation(
+                    stored[department_id].evaluation_results if department_id in stored else ""
+                ) or {},
+                "open_questions": section.get("open_questions") or [],
+            },
+        )
+    row = session.get(RfpTicket, ticket_id)
+    row.status = "waiting_for_approval"
+    handoff["arbitration"] = {
+        "rounds": arbitration.get("rounds") or 0,
+        "applied": arbitration.get("applied") or [],
+        "conflicts": arbitration.get("conflicts") or [],
+    }
+    handoff["ticket_id"] = ticket_id
+    row.handoff_json = json.dumps(handoff)
+    row.trace_json = json.dumps(_collect_trace(ticket_id, list(revised.values())))
+    row.error_detail = ""
+    row.updated_at = datetime.now(timezone.utc)
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return row
+
+
+def resume_approval(session: Session, ticket_id: str, department_id: str, decision: str) -> RfpTicket:
+    """Continue one department. A rejection leaves the final document unwritten."""
+    row = session.get(RfpTicket, ticket_id)
+    if row is None:
+        raise LookupError(ticket_id)
+    if row.status != "waiting_for_approval":
+        raise ValueError("That ticket is not waiting for approval.")
+    state = resume_department(ticket_id, department_id, decision)
+    current = _sections_by_id(session, ticket_id).get(department_id)
+    if current is None:
+        raise LookupError(department_id)
+    current.approval_status = str(state.get("approval_status") or "")
+    current.approver = str(state.get("approver") or "")
+    current.approved_at = str(state.get("approved_at") or "")
+    current.decision = str(state.get("decision") or "")
+    current.approval_rounds = int(state.get("approval_rounds") or 0)
+    if state.get("draft_content"):
+        current.draft_content = state["draft_content"]
+    try:
+        handoff = json.loads(row.handoff_json) if row.handoff_json else {}
+    except json.JSONDecodeError:
+        handoff = {}
+    metadata = dict(handoff.get("metadata") or {})
+    sections = [_section_dict(section) for section in _sections_by_id(session, ticket_id).values()]
+    for section in sections:
+        if section["department_id"] == department_id:
+            section["approval_status"] = current.approval_status
+            section["approver"] = current.approver
+    if ready_for_document(sections, metadata):
+        generated_at = datetime.now(timezone.utc).isoformat()
+        row.final_document = render_final_document(row.client_name, sections, metadata, generated_at)
+        row.status = "done"
+        handoff["final_document"] = {
+            "ticket_id": ticket_id,
+            "generated_at": generated_at,
+            "total_estimated_value": metadata.get("budget_range") or "",
+        }
+    else:
+        row.status = "waiting_for_approval"
+        row.final_document = ""
+    handoff["ticket_id"] = ticket_id
+    row.handoff_json = json.dumps(handoff)
+    row.trace_json = json.dumps(_collect_trace(ticket_id, sections))
+    row.updated_at = datetime.now(timezone.utc)
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return row
+
+
+def _owner(department_id: str) -> str:
+    if department_id == CEO_ID:
+        return CEO_OWNER
+    return DEPARTMENTS.get(department_id, {}).get("owner", "")
+
+
+def _sections_by_id(session: Session, ticket_id: str) -> dict:
+    rows = session.exec(
+        select(RfpDepartmentSection).where(RfpDepartmentSection.ticket_id == ticket_id)
+    ).all()
+    return {row.department_id: row for row in rows}
+
+
+def _section_dict(section: RfpDepartmentSection) -> dict:
+    return {
+        "department_id": section.department_id,
+        "owner": section.contact_name or _owner(section.department_id),
+        "contact_name": section.contact_name or _owner(section.department_id),
+        "draft_content": section.draft_content,
+        "evaluation": _evaluation(section.evaluation_results) or {},
+        "open_questions": [line for line in section.open_questions.splitlines() if line],
+        "approval_status": section.approval_status,
+        "approver": section.approver,
+    }
+
+
+def _collect_trace(ticket_id: str, sections: list[dict]) -> list:
+    entries = []
+    department_ids = ["arbitration"] + [section["department_id"] for section in sections]
+    for department_id in department_ids:
+        try:
+            if department_id == "arbitration":
+                from data.pipelines.rfp_intake.approval_graph import _arbitration_graph, _config, get_saver
+
+                snapshot = _arbitration_graph(get_saver()).get_state(_config(ticket_id, "arbitration"))
+                values = dict(snapshot.values or {})
+            else:
+                values = read_approval(ticket_id, department_id)
+        except Exception:
+            continue
+        entries.extend(values.get("trace") or [])
+    return entries
+
+
 def ticket_payload(session: Session, row: RfpTicket) -> dict:
     sections = session.exec(
         select(RfpDepartmentSection).where(RfpDepartmentSection.ticket_id == row.ticket_id)
@@ -233,6 +411,8 @@ def ticket_payload(session: Session, row: RfpTicket) -> dict:
         "open_questions": [line for line in row.open_questions.splitlines() if line],
         "discard_reason": row.discard_reason,
         "error_detail": row.error_detail,
+        "final_document": row.final_document,
+        "trace": _trace(row.trace_json),
         "sections": [
             {
                 "department_id": section.department_id,
@@ -242,6 +422,11 @@ def ticket_payload(session: Session, row: RfpTicket) -> dict:
                 "draft_content": section.draft_content,
                 "approval_status": section.approval_status,
                 "iterations": section.iterations,
+                "approver": section.approver,
+                "approved_at": section.approved_at,
+                "decision": section.decision,
+                "approval_rounds": section.approval_rounds,
+                "awaiting_decision": _awaiting(row.ticket_id, section.department_id),
                 "evaluation": _evaluation(section.evaluation_results),
             }
             for section in sections
@@ -250,6 +435,23 @@ def ticket_payload(session: Session, row: RfpTicket) -> dict:
         "created_at": row.created_at.isoformat(),
         "updated_at": row.updated_at.isoformat(),
     }
+
+
+def _trace(raw: str) -> list:
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return []
+    return parsed if isinstance(parsed, list) else []
+
+
+def _awaiting(ticket_id: str, department_id: str) -> bool:
+    try:
+        return is_interrupted(ticket_id, department_id)
+    except Exception:
+        return False
 
 
 def _evaluation(raw: str) -> dict | None:

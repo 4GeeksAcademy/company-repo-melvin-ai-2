@@ -33,4 +33,4 @@ The backoffice page `/rfp` shows the provisional section and the last feedback. 
 
 ## Status
 
-`POST /rfp/tickets/{ticket_id}/draft` returns `202` and sets `drafting`. Evaluators move the ticket to `under_evaluation` while they run. Drafts and `evaluation_results` are columns on `rfp_department_sections`.
+`POST /rfp/tickets/{ticket_id}/draft` returns `202` and sets `drafting`. Evaluators move the ticket to `under_evaluation` while they run. Drafts and `evaluation_results` are columns on `rfp_department_sections`. Part 3 reads that handoff from `docs/rfp/approval.md`.

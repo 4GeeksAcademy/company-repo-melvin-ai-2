@@ -893,6 +893,10 @@ td small {
   grid-template-columns: minmax(12rem, 18rem) 1fr;
 }
 
+.rfp-final {
+  white-space: pre-wrap;
+}
+
 @media (max-width: 720px) {
   .rfp-layout {
     grid-template-columns: 1fr;

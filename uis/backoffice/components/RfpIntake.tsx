@@ -1,13 +1,21 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { listRfpTickets, RfpTicket, startRfpDraft, uploadRfp } from "@/lib/rfp";
+import {
+  decideRfpSection,
+  listRfpTickets,
+  RfpTicket,
+  startRfpApproval,
+  startRfpDraft,
+  uploadRfp,
+} from "@/lib/rfp";
 
 const OWNERS: Record<string, string> = {
   marketing: "Camila Ospina",
   operaciones: "Felipe Guerrero",
   procurement: "Lucía Fernández",
   training: "Jake Morrison",
+  ceo: "Mariana Restrepo",
 };
 
 export function RfpIntake() {
@@ -80,6 +88,36 @@ export function RfpIntake() {
     }
   }
 
+  async function startApproval(ticketId: string) {
+    setError(null);
+    try {
+      await startRfpApproval(ticketId);
+      await refresh();
+    } catch (err) {
+      if (err instanceof Error && err.name === "AuthSessionError") return;
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not reach the Brasaland service. Check your connection and try again.",
+      );
+    }
+  }
+
+  async function decide(ticketId: string, departmentId: string, decision: "approve" | "reject" | "request_changes") {
+    setError(null);
+    try {
+      await decideRfpSection(ticketId, departmentId, decision);
+      await refresh();
+    } catch (err) {
+      if (err instanceof Error && err.name === "AuthSessionError") return;
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not reach the Brasaland service. Check your connection and try again.",
+      );
+    }
+  }
+
   const current = tickets.find((ticket) => ticket.ticket_id === selected) ?? null;
 
   return (
@@ -121,7 +159,9 @@ export function RfpIntake() {
             </li>
           ))}
         </ul>
-        {current ? <TicketDetail ticket={current} onDraft={startDraft} /> : null}
+        {current ? (
+          <TicketDetail ticket={current} onDraft={startDraft} onApproval={startApproval} onDecide={decide} />
+        ) : null}
       </div>
     </section>
   );
@@ -130,9 +170,17 @@ export function RfpIntake() {
 function TicketDetail({
   ticket,
   onDraft,
+  onApproval,
+  onDecide,
 }: {
   ticket: RfpTicket;
   onDraft: (ticketId: string) => Promise<void>;
+  onApproval: (ticketId: string) => Promise<void>;
+  onDecide: (
+    ticketId: string,
+    departmentId: string,
+    decision: "approve" | "reject" | "request_changes",
+  ) => Promise<void>;
 }) {
   const provisional = ticket.sections.filter(
     (section) => section.approval_status === "needs_human_review",
@@ -147,6 +195,17 @@ function TicketDetail({
         <button type="button" onClick={() => void onDraft(ticket.ticket_id)}>
           Draft the proposal
         </button>
+      ) : null}
+      {(ticket.status === "under_evaluation" || ticket.status === "needs_human_review") ? (
+        <button type="button" onClick={() => void onApproval(ticket.ticket_id)}>
+          Send for approval
+        </button>
+      ) : null}
+      {ticket.final_document ? (
+        <section className="rfp-final" aria-label="Final document">
+          <h3>Final document</h3>
+          <p>{ticket.final_document}</p>
+        </section>
       ) : null}
       {provisional.length > 0 ? (
         <p role="status">
@@ -205,6 +264,29 @@ function TicketDetail({
           ) : null}
           {section.approval_status === "needs_human_review" ? (
             <p>This draft is provisional.</p>
+          ) : null}
+          {section.approval_status === "approved" ? <p>{section.approver} approved this section.</p> : null}
+          {section.approval_status === "rejected" ? (
+            <p>Rejected by {section.approver || section.contact_name}. The final document stays unsent.</p>
+          ) : null}
+          {section.approval_status === "request_changes" ? (
+            <p>The change limit was reached. This section is not approved.</p>
+          ) : null}
+          {section.awaiting_decision ? (
+            <div>
+              <button type="button" onClick={() => void onDecide(ticket.ticket_id, section.department_id, "approve")}>
+                Approve
+              </button>
+              <button type="button" onClick={() => void onDecide(ticket.ticket_id, section.department_id, "reject")}>
+                Reject
+              </button>
+              <button
+                type="button"
+                onClick={() => void onDecide(ticket.ticket_id, section.department_id, "request_changes")}
+              >
+                Request changes
+              </button>
+            </div>
           ) : null}
           {section.draft_content ? <p>{section.draft_content}</p> : null}
           {section.evaluation ? (
