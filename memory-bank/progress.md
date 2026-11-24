@@ -1,9 +1,10 @@
 # Progress
 
 ## Current Milestone
-RFP approval on `Milestone_9_pt.3-melvin-ai-2`: each department signs its own section, and the final document is written only after the required signatures.
+RFP notifications on `Milestone_10-melvin-ai-2`: `/rfp` shows a ticket as soon as it is registered, without a manual reload.
 
 ## Completed
+- RFP notifications (2026-11-23): `GET /rfp/tickets/stream` emits `rfp_ticket_created` with `ticket_id`, `status` `analyzing`, and `created_at`. The page opens that stream with `fetch` and the backoffice JWT. A dropped connection backs off, refetches the ticket list once, and does not repeat a `ticket_id`. The note is `docs/rfp/notifications.md`.
 - RFP approval (2026-11-19): each department pauses on its own SQLite checkpoint, `rfp-{ticket_id}:{department}`. Resume accepts approve, reject, or request changes. Arbitration uses the briefing triggers and the named arbiter, and it stops after two rounds. A contract above USD 50,000 also waits for Mariana Restrepo. The page is `/rfp`. The note is `docs/rfp/approval.md`.
 - RFP drafts (2026-11-18): `data/pipelines/rfp_intake/draft_graph.py` gives marketing, operaciones, procurement, and training their own generators. Three evaluators run on the section in parallel. A failed section returns to its generator with the failed rule, and the loop stops after two revisions. The last draft is kept and marked `needs_human_review` when it still fails. Passing tickets stay `under_evaluation`. The page is `/rfp`. The note is `docs/rfp/draft.md`.
 - RFP intake (2026-11-16): `data/pipelines/rfp_intake/` converts the PDF to Markdown, scores readability, and runs classify, orchestrate, department workers, and synthesize. Tickets live in PostgreSQL through SQLModel. Statuses for this part are `analyzing`, `discarded`, and `intake_complete`. The backoffice page is `/rfp`. The brief is `docs/rfp/brasaland-BRIEFING.md`.
@@ -49,6 +50,7 @@ RFP approval on `Milestone_9_pt.3-melvin-ai-2`: each department signs its own se
 - Sprint 3 AUTH-03: forgot/reset/change-password API + `@repo/auth` forms and thin routes; reset tokens hashed in TinyDB (expiry + one-time); Resend wired behind `RESEND_API_KEY`.
 
 ## Verification
+- RFP notifications (2026-11-23): `services/api/.venv/bin/python -m pytest tests/pipelines/test_rfp_notifications.py -q` — **5 passed**. A missing token is rejected. An upload publishes `ticket_id`, `analyzing`, and `created_at`. The HTTP response is `text/event-stream` with event name `rfp_ticket_created` and that JSON. Two subscribers each receive the registration.
 - RFP approval (2026-11-19): `services/api/.venv/bin/python -m pytest tests/pipelines/test_rfp_approval.py tests/pipelines/test_rfp_draft.py tests/pipelines/test_rfp_intake.py -q` — **21 passed** after the CEO case. A department can be approved while another stays paused. Request changes stops at the second round. A price the kitchen cannot support is raised by Camila. A rejection does not write the final document. Andes Tech runs from intake through a signed document. No browser click-through.
 - RFP drafts (2026-11-18): `services/api/.venv/bin/python -m pytest tests/pipelines/test_rfp_draft.py tests/pipelines/test_rfp_intake.py -q` — **11 passed**. A marketing draft passes. A short section fails readability. A 3-business-day setup fails `setup-sla`. A failed draft is revised and then passes. Two departments start together, and the section that keeps promising 3 business days stays on the ticket as provisional. No browser click-through.
 - RFP intake (2026-11-16): `services/api/.venv/bin/python -m pytest tests/pipelines/test_rfp_intake.py -q` — **5 passed** on the official sample PDFs. Sunset Bay is accepted for four departments. The Spanish Andes Tech letter skips training. The Spanish franchise note is discarded. No browser click-through. The page is `/rfp`.

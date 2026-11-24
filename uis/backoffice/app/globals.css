@@ -897,6 +897,15 @@ td small {
   white-space: pre-wrap;
 }
 
+.rfp-live {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  color: var(--ink);
+  background: #f4f8f4;
+  border: 1px solid var(--green);
+  border-left-width: 6px;
+}
+
 @media (max-width: 720px) {
   .rfp-layout {
     grid-template-columns: 1fr;

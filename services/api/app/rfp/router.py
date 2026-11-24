@@ -1,15 +1,17 @@
-"""Upload an RFP and poll its ticket. The graph lives in data/pipelines."""
+"""Upload an RFP and stream a notice when the ticket is registered."""
 
 from __future__ import annotations
 
 import logging
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlmodel import Session
 
 from app.auth.deps import get_current_user
 from app.inventory.db import get_engine
+from app.rfp.notifications import iter_ticket_events, publish_ticket_created
 from app.rfp.service import (
     begin_approval,
     create_ticket,
@@ -67,6 +69,11 @@ async def upload_rfp(
             status_code=503,
             detail="The RFP ticket could not be saved. Try again or contact hello@brasaland.com.",
         ) from None
+    publish_ticket_created(
+        ticket_id=str(body["ticket_id"]),
+        status=str(body["status"]),
+        created_at=str(body["created_at"]),
+    )
     background.add_task(_run_later, body["ticket_id"])
     return body
 
@@ -121,6 +128,20 @@ def record_approval(
         raise HTTPException(status_code=404, detail="That RFP ticket was not found.") from None
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from None
+
+
+@router.get("/tickets/stream")
+def stream_tickets(_user=Depends(get_current_user)) -> StreamingResponse:
+    """Push rfp_ticket_created to this connection. A missing JWT is rejected first."""
+    return StreamingResponse(
+        iter_ticket_events(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/tickets")
