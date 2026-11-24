@@ -1,12 +1,19 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { AuthSessionError } from "@repo/auth";
 import {
   decideRfpSection,
+  getRfpTicket,
   listRfpTickets,
+  mergeRfpTickets,
+  nextBackoffMs,
+  readRfpTicketStream,
   RfpTicket,
+  RfpTicketNotice,
   startRfpApproval,
   startRfpDraft,
+  ticketFromNotice,
   uploadRfp,
 } from "@/lib/rfp";
 
@@ -21,33 +28,108 @@ const OWNERS: Record<string, string> = {
 export function RfpIntake() {
   const [tickets, setTickets] = useState<RfpTicket[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [notices, setNotices] = useState<RfpTicketNotice[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
+  function rememberNotice(notice: RfpTicketNotice) {
+    setNotices((current) =>
+      current.some((item) => item.ticket_id === notice.ticket_id) ? current : [notice, ...current],
+    );
+    setTickets((current) => {
+      if (current.some((ticket) => ticket.ticket_id === notice.ticket_id)) return current;
+      return [ticketFromNotice(notice), ...current];
+    });
+    setSelected((current) => current ?? notice.ticket_id);
+  }
+
   async function refresh() {
     const rows = await listRfpTickets();
-    setTickets(rows);
+    setTickets((current) => mergeRfpTickets(current, rows));
     setSelected((current) => current ?? rows[0]?.ticket_id ?? null);
   }
 
   useEffect(() => {
+    const controller = new AbortController();
     let stop = false;
-    refresh().catch((err: unknown) => {
-      if (stop || (err instanceof Error && err.name === "AuthSessionError")) return;
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Could not reach the Brasaland service. Check your connection and try again.",
-      );
-    });
-    const timer = window.setInterval(() => {
-      refresh().catch(() => undefined);
-    }, 2000);
+
+    async function watch() {
+      try {
+        const rows = await listRfpTickets();
+        if (stop) return;
+        setTickets(rows);
+        setSelected((current) => current ?? rows[0]?.ticket_id ?? null);
+      } catch (err: unknown) {
+        if (stop || err instanceof AuthSessionError) return;
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Could not reach the Brasaland service. Check your connection and try again.",
+        );
+      }
+
+      let attempt = 0;
+      while (!stop) {
+        try {
+          await readRfpTicketStream((notice) => {
+            attempt = 0;
+            rememberNotice(notice);
+          }, controller.signal);
+        } catch (err: unknown) {
+          if (stop || controller.signal.aborted || err instanceof AuthSessionError) return;
+        }
+        if (stop) return;
+        const wait = nextBackoffMs(attempt);
+        attempt += 1;
+        await new Promise((resolve) => window.setTimeout(resolve, wait));
+        if (stop) return;
+        try {
+          const rows = await listRfpTickets();
+          if (stop) return;
+          setTickets((current) => {
+            const known = new Set(current.map((ticket) => ticket.ticket_id));
+            const arrived = rows.filter((ticket) => !known.has(ticket.ticket_id));
+            if (arrived.length > 0) {
+              window.setTimeout(() => {
+                for (const ticket of arrived) {
+                  rememberNotice({
+                    ticket_id: ticket.ticket_id,
+                    status: ticket.status,
+                    created_at: "",
+                  });
+                }
+              }, 0);
+            }
+            return mergeRfpTickets(current, rows);
+          });
+        } catch (err: unknown) {
+          if (err instanceof AuthSessionError) return;
+        }
+      }
+    }
+
+    void watch();
     return () => {
       stop = true;
-      window.clearInterval(timer);
+      controller.abort();
     };
   }, []);
+
+  const openStatus = tickets.find((item) => item.ticket_id === selected)?.status;
+  useEffect(() => {
+    if (!selected || (openStatus !== "analyzing" && openStatus !== "drafting")) return;
+    const ticketId = selected;
+    const timer = window.setInterval(() => {
+      getRfpTicket(ticketId)
+        .then((fresh) => {
+          setTickets((current) =>
+            current.map((item) => (item.ticket_id === fresh.ticket_id ? fresh : item)),
+          );
+        })
+        .catch(() => undefined);
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, [selected, openStatus]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,8 +140,13 @@ export function RfpIntake() {
     setError(null);
     try {
       const ticket = await uploadRfp(file);
+      setTickets((current) => mergeRfpTickets(current, [ticket]));
       setSelected(ticket.ticket_id);
-      await refresh();
+      setNotices((current) =>
+        current.some((item) => item.ticket_id === ticket.ticket_id)
+          ? current
+          : [{ ticket_id: ticket.ticket_id, status: ticket.status, created_at: "" }, ...current],
+      );
       event.currentTarget.reset();
     } catch (err) {
       if (err instanceof Error && err.name === "AuthSessionError") return;
@@ -124,8 +211,9 @@ export function RfpIntake() {
     <section className="rfp-intake" aria-labelledby="rfp-intake-title">
       <h1 id="rfp-intake-title">RFP intake</h1>
       <p>
-        Upload a request for Camila Ospina. After intake, each department drafts
-        its section and the ticket shows whether that draft is ready or provisional.
+        Upload a request for Camila Ospina. A new ticket appears on this screen
+        as soon as it is registered. After intake, each department drafts its
+        section and the ticket shows whether that draft is ready or provisional.
       </p>
       <form onSubmit={onSubmit}>
         <label htmlFor="rfp-file">
@@ -136,6 +224,11 @@ export function RfpIntake() {
           {uploading ? "Saving the PDF" : "Upload"}
         </button>
       </form>
+      {notices.map((notice) => (
+        <p key={notice.ticket_id} className="rfp-live" role="status">
+          RFP ticket {notice.ticket_id} arrived and needs processing. Status: {notice.status}.
+        </p>
+      ))}
       {error ? (
         <p role="alert">
           {error}{" "}
